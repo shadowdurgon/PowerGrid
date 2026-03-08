@@ -52,7 +52,6 @@ import org.patryk3211.powergrid.circuits.editor.CircuitDesignTableBlock;
 import org.patryk3211.powergrid.config.CResistance;
 import org.patryk3211.powergrid.config.CStress;
 import org.patryk3211.powergrid.config.CThermal;
-import org.patryk3211.powergrid.electricity.airsiren.AirSirenBlock;
 import org.patryk3211.powergrid.electricity.basinheater.BasinHeaterBlock;
 import org.patryk3211.powergrid.electricity.basinheater.BasinHeaterBlockEntity;
 import org.patryk3211.powergrid.electricity.battery.BatteryBlock;
@@ -745,14 +744,6 @@ public class ModdedBlocks {
             .blockstate(air())
             .register();
 
-    public static BlockEntry<AirSirenBlock> AIR_SIREN = REGISTRATE.block("air_siren", AirSirenBlock::new)
-            .initialProperties(SharedProperties::softMetal)
-            .blockstate(horizontalBlock("air_siren"))
-            .transform(pickaxeOnly())
-            .transform(CResistance.setResistance(20))
-            .transform(CThermal.maxPower(50, 1.5f))
-            .simpleItem()
-            .register();
 
     public static BlockEntry<numericalDisplayBlock> NUMERICAL_DISPLAY = REGISTRATE.block("numerical", numericalDisplayBlock::new)
             .initialProperties(SharedProperties::softMetal)

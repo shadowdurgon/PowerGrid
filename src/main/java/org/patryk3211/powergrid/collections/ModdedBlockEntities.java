@@ -17,12 +17,9 @@ package org.patryk3211.powergrid.collections;
 
 import com.simibubi.create.content.kinetics.base.ShaftVisual;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import org.patryk3211.powergrid.circuits.circuitboard.CircuitBoardBlockEntity;
 import org.patryk3211.powergrid.circuits.circuitboard.CircuitBoardRenderer;
 import org.patryk3211.powergrid.circuits.editor.CircuitDesignTableBlockEntity;
-import org.patryk3211.powergrid.electricity.airsiren.AirSirenBlockEntity;
-import org.patryk3211.powergrid.electricity.airsiren.AirSirenBlockEntityRenderer;
 import org.patryk3211.powergrid.electricity.basinheater.BasinHeaterBlockEntity;
 import org.patryk3211.powergrid.electricity.battery.MultiBlockBatteryEntity;
 import org.patryk3211.powergrid.electricity.battery.PotatoBatteryBlockEntity;
@@ -352,12 +349,6 @@ public class ModdedBlockEntities {
                     .visual(() -> ShaftVisual::new)
                     .validBlock(ModdedBlocks.PUNCH_CARD_READER)
                     .renderer(() -> PunchCardReaderRenderer::new)
-                    .register();
-
-    public static final BlockEntityEntry<AirSirenBlockEntity> AIR_SIREN =
-            REGISTRATE.blockEntity("air_siren", AirSirenBlockEntity::new)
-                    .validBlock(ModdedBlocks.AIR_SIREN)
-                    .renderer(() -> AirSirenBlockEntityRenderer::new)
                     .register();
 
     public static final BlockEntityEntry<numericalDisplayBlockEntity> NUMERICAL_DISPLAY =
