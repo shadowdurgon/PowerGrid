@@ -17,10 +17,12 @@ package org.patryk3211.powergrid.collections;
 
 import com.simibubi.create.content.kinetics.base.ShaftVisual;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import org.patryk3211.powergrid.circuits.circuitboard.CircuitBoardBlockEntity;
 import org.patryk3211.powergrid.circuits.circuitboard.CircuitBoardRenderer;
 import org.patryk3211.powergrid.circuits.editor.CircuitDesignTableBlockEntity;
 import org.patryk3211.powergrid.electricity.airsiren.AirSirenBlockEntity;
+import org.patryk3211.powergrid.electricity.airsiren.AirSirenBlockEntityRenderer;
 import org.patryk3211.powergrid.electricity.basinheater.BasinHeaterBlockEntity;
 import org.patryk3211.powergrid.electricity.battery.MultiBlockBatteryEntity;
 import org.patryk3211.powergrid.electricity.battery.PotatoBatteryBlockEntity;
@@ -46,6 +48,8 @@ import org.patryk3211.powergrid.electricity.grounding.GroundingRodBlockEntity;
 import org.patryk3211.powergrid.electricity.heater.HeaterBlockEntity;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlockEntity;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureRenderer;
+import org.patryk3211.powergrid.electricity.numericaldisplay.numericalDisplayBlockEntity;
+import org.patryk3211.powergrid.electricity.numericaldisplay.numericalDisplayBlockEntityRenderer;
 import org.patryk3211.powergrid.electricity.resistor.ResistorBlockEntity;
 import org.patryk3211.powergrid.electricity.socket.SocketBlockEntity;
 import org.patryk3211.powergrid.electricity.sparkgap.SparkGapBlockEntity;
@@ -353,6 +357,13 @@ public class ModdedBlockEntities {
     public static final BlockEntityEntry<AirSirenBlockEntity> AIR_SIREN =
             REGISTRATE.blockEntity("air_siren", AirSirenBlockEntity::new)
                     .validBlock(ModdedBlocks.AIR_SIREN)
+                    .renderer(() -> AirSirenBlockEntityRenderer::new)
+                    .register();
+
+    public static final BlockEntityEntry<numericalDisplayBlockEntity> NUMERICAL_DISPLAY =
+            REGISTRATE.<numericalDisplayBlockEntity>blockEntity("numerical_display", numericalDisplayBlockEntity::new)
+                    .validBlock(ModdedBlocks.NUMERICAL_DISPLAY)
+                    .renderer(() -> numericalDisplayBlockEntityRenderer::new)
                     .register();
 
     @SuppressWarnings("EmptyMethod")

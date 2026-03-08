@@ -32,6 +32,9 @@ import org.patryk3211.powergrid.config.CWire;
 import org.patryk3211.powergrid.electricity.light.bulb.GrowthLamp;
 import org.patryk3211.powergrid.electricity.light.bulb.LightBulb;
 import org.patryk3211.powergrid.electricity.light.bulb.LvLightBulb;
+import org.patryk3211.powergrid.electricity.numericaldisplay.items.blankingModuleItem;
+import org.patryk3211.powergrid.electricity.numericaldisplay.items.oneToZeroModuleItem;
+import org.patryk3211.powergrid.electricity.numericaldisplay.items.zerotonineModuleItem;
 import org.patryk3211.powergrid.electricity.sim.DebugItem;
 import org.patryk3211.powergrid.electricity.wire.WireItem;
 import org.patryk3211.powergrid.electricity.wire.WireProperties;
@@ -225,6 +228,18 @@ public class ModdedItems {
             .register();
 
     public static final ItemEntry<PunchCardItem> PUNCH_CARD = REGISTRATE.item("punch_card", PunchCardItem::new)
+            .register();
+
+    public static final ItemEntry<oneToZeroModuleItem> ONETOZERO_NUMBER_MODULE = REGISTRATE.item("onetozero_module", oneToZeroModuleItem::new)
+            .lang("One To Zero Module")
+            .register();
+
+    public static final ItemEntry<blankingModuleItem> BLANKING_MODULE = REGISTRATE.item("blanking_module", blankingModuleItem::new)
+            .lang("Blanking Plate")
+            .register();
+
+    public static final ItemEntry<zerotonineModuleItem> ZEROTONINE_NUMBER_MODULE = REGISTRATE.item("zerotonine_module", zerotonineModuleItem::new)
+            .lang("Zero to nine Module")
             .register();
 
     @SuppressWarnings("EmptyMethod")
