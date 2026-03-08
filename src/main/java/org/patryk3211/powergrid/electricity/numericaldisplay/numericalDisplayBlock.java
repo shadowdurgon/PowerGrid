@@ -76,12 +76,10 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
 
         Vec3 hitVec = hit.getLocation();
 
-        // Get hit position relative to block origin
         double localX = hitVec.x - pos.getX();
         double localY = hitVec.y - pos.getY();
         double localZ = hitVec.z - pos.getZ();
 
-        // Convert to face-local 0-1 coordinates based on facing direction
         double faceU, faceV;
         switch (facing) {
             case NORTH -> { faceU = localX;       faceV = 1.0 - localY; }
@@ -104,36 +102,6 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
 
         return InteractionResult.CONSUME;
     }
-
-//    @Override
-//    protected InteractionResult useWithoutItem(BlockState state, Level level,
-//                                               BlockPos pos, Player player, BlockHitResult hit) {
-//
-//        if (hit.getDirection() != Direction.NORTH) return InteractionResult.PASS;
-//
-//        // Convert hit location to slot index
-//        Vec3 hitVec = hit.getLocation();
-//        // Hit position relative to block origin, on the NORTH face (Z=0)
-//        double localX = hitVec.x - pos.getX(); // 0.0 - 1.0
-//        double localY = hitVec.y - pos.getY(); // 0.0 - 1.0
-//
-//        int col = (int)(localX * 4); // 0-3
-//        int row = 3 - (int)(localY * 4); // 0-3, row 0 = top
-//
-//        col = Math.clamp(col, 0, 3);
-//        row = Math.clamp(row, 0, 3);
-//
-//        int slotIndex = row * 4 + col;
-//
-//        if (level.isClientSide) return InteractionResult.SUCCESS;
-//
-//        BlockEntity be = level.getBlockEntity(pos);
-//        if (be instanceof numericalDisplayBlockEntity display) {
-//            display.interact(slotIndex, player);
-//        }
-//
-//        return InteractionResult.CONSUME;
-//    }
 
     private static final TerminalBoundingBox[] NORTHTERMINALS = new TerminalBoundingBox[]{
 

@@ -9,7 +9,7 @@ import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
 public class zeroToNineNumberModule implements IDisplayModule {
     private final int digit;
     private final boolean halfClick;
-    //counts 1,2,3,4,5,6,7,8,9,0,blank
+    //counts 0,1,2,3,4,5,6,7,8,9,blank,0 (first number repeated for smooth transition)
     public zeroToNineNumberModule(int digit, Boolean halfClick) {
         if (digit < 0 || digit > 50)
             throw new IllegalArgumentException("Digit must be 0-12, got: " + digit);

@@ -22,50 +22,30 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
     public numericalDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
-//    private static final ResourceLocation TEXTURE =
-//            PowerGrid.asResource("textures/block/numerical_display/1-0");
-
-    // Your digit sprite sheet: horizontal strip of 11 frames (1-9, 0, blank)
-    // Each frame: 4px wide, 7px tall, 1px padding BETWEEN frames (not at start/end)
-    // Total sheet width = 11*4 + 10*1 = 54px, height = 7px
 
     private static final ResourceLocation BLANK_PLATE_TEXTURE = //textures
             PowerGrid.asResource("block/numerical_display/onetozero");
 
 
-    // Sprite sheet dimensions (pixels)
     private static final float SHEET_WIDTH = 64f; // 11*4 + 10*1
     private static final float SHEET_HEIGHT = 8f;
 
-    // Each frame in the sheet: 4px wide, 7px tall
     private static final float FRAME_WIDTH = 4f;
     private static final float FRAME_HEIGHT = 7f;
     private static final float FRAME_PADDING = 1f; // padding BETWEEN frames only
 
-    // Grid: 4 columns x 4 rows of slots
     private static final int GRID_COLS = 4;
     private static final int GRID_ROWS = 4;
 
-    // Each cell on the block face is 4x4 pixels out of the 16x16 face
-    // In world space, the full face = 1.0 unit, so each pixel = 1/16 units
     private static final float PIXEL = 1f / 16f;
-    private static final float CELL_SIZE = 4f * PIXEL;  // 4 pixels per cell
-    private static final float INNER_OFFSET = 1f * PIXEL;  // 1px border/frame
-    private static final float INNER_SIZE = 2f * PIXEL;  // 2x2 inner display area
+    private static final float CELL_SIZE = 4f * PIXEL;
+    private static final float INNER_OFFSET = 1f * PIXEL;
+    private static final float INNER_SIZE = 2f * PIXEL;
 
-    // Nudge quads slightly off the face to prevent z-fighting with the block model
     private static final float Z_NUDGE = 0.001f;
 
     @Override
     protected void renderSafe(numericalDisplayBlockEntity be, float partialTicks, PoseStack pStack, MultiBufferSource buffer, int light, int overlay) {
-
-//        Minecraft mc = Minecraft.getInstance();
-//        TextureManager tm = mc.getTextureManager();
-//        AbstractTexture tex = tm.getTexture(BLANK_PLATE_TEXTURE);
-//        System.out.println("=== NumericalDisplayBER ===");
-//        System.out.println("Looking for texture: " + BLANK_PLATE_TEXTURE);
-//        System.out.println("Texture object: " + tex);
-//        System.out.println("Texture class: " + (tex != null ? tex.getClass().getSimpleName() : "NULL"));
 
         Direction facing = be.getBlockState().getValue(numericalDisplayBlock.HORIZONTAL_FACING);
         pStack.pushPose();

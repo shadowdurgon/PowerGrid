@@ -15,7 +15,6 @@ public class displayModuleRegistry {
     static {
         register("onetozero", value -> new oneToZeroNumberModule(Integer.parseInt(value)));
         register("blanking", value -> new blankingModule());
-        //register("zerotonine", value -> new zeroToNineNumberModule(Integer.parseInt(value), Boolean.parseBoolean()));
         register("zerotonine", value -> {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);

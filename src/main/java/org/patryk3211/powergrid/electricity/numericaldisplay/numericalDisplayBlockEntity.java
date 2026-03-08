@@ -8,7 +8,6 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -26,14 +25,6 @@ import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 
 public class numericalDisplayBlockEntity extends ElectricBlockEntity implements IElectricEntity {
     private SwitchedWire[] wires;
-
-    //math for making it work
-
-
-    //solenoid ground is disconnected and is connected to second pin on back for reset
-    //otherwise a full pulse is need to rotate a full number, if voltage is left on and not taken away
-    //it only moves halfway to the next number
-
     public static final int SLOT_COUNT = 16;
 
     private final IDisplayModule[] modules = new IDisplayModule[SLOT_COUNT];
@@ -42,18 +33,10 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         super(ModdedBlockEntities.NUMERICAL_DISPLAY.get(), pos, state);
     }
 
-    // -------------------------------------------------------------------------
-    // Slot access (called by BER)
-    // -------------------------------------------------------------------------
-
     public slotData getSlot(int index) {
         if (index < 0 || index >= SLOT_COUNT) return slotData.empty();
         return new slotData(modules[index]);
     }
-
-    // -------------------------------------------------------------------------
-    // Right-click interaction (called by your Block class)
-    // -------------------------------------------------------------------------
 
     public boolean interact(int slotIndex, Player player) {
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return false;
@@ -76,14 +59,12 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
         if (heldModule == null) return false;
 
-        // Swap out existing module if present
         if (current != null) {
             if (!player.getInventory().add(current.toItemStack())) {
                 player.drop(current.toItemStack(), false);
             }
         }
 
-        // Insert new module, consume one item from stack
         modules[slotIndex] = heldModule;
         if (!player.isCreative()) held.shrink(1);
         wires[slotIndex * 3].setState(true);
@@ -100,7 +81,7 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         if (stack.isEmpty()) return null;
 
         if (stack.is(ModdedItems.ONETOZERO_NUMBER_MODULE.get())) {
-            return new oneToZeroNumberModule(0); // starts at 0, driving system updates it
+            return new oneToZeroNumberModule(0);
         }
 
         if (stack.is(ModdedItems.BLANKING_MODULE.get())) {
@@ -108,15 +89,11 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         }
 
         if (stack.is(ModdedItems.ZEROTONINE_NUMBER_MODULE.get())) {
-            return new zeroToNineNumberModule(0, false); // starts at 0, driving system updates it
+            return new zeroToNineNumberModule(0, false);
         }
 
         return null;
     }
-
-    // -------------------------------------------------------------------------
-    // Sync & dirty marking
-    // -------------------------------------------------------------------------
 
     private void markUpdated() {
         setChanged();
@@ -144,10 +121,6 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         }
     }
 
-    // -------------------------------------------------------------------------
-    // NBT save/load
-    // -------------------------------------------------------------------------
-
     @Override
     public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
@@ -172,14 +145,6 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Public API for your driving system
-    // -------------------------------------------------------------------------
-
-    /**
-     * Set a digit in a slot programmatically.
-     * Only updates if a DigitModule is installed in that slot.
-     */
     public void setDigit(int slotIndex, int digit) {
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
         if (modules[slotIndex] instanceof zeroToNineNumberModule) {
@@ -199,10 +164,6 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
     }
 
-    /**
-     * Set all digit slots at once.
-     * Skips any slot that doesn't have a DigitModule installed.
-     */
     public void setDigits(int[] digits) {
         for (int i = 0; i < Math.min(digits.length, SLOT_COUNT); i++) {
             setDigit(i, digits[i]);
@@ -276,8 +237,6 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
     @Override
     public void buildCircuit(CircuitBuilder builder) {
-        //pos to neg
-        //reset to pos
         builder.setTerminalCount(2*SLOT_COUNT + 1);
         wires = new SwitchedWire[3*SLOT_COUNT];
         var negative = builder.terminalNode(0);
@@ -293,35 +252,4 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
             p +=2; r +=2; w1+=3; w2+=3; w3+=3;
         }
     }
-
-
-
-
-    /*
-            for(var i = 0; i < nodeIndexSet.size(); ++i) {
-                if(external) {
-                    var node = new OwnedFloatingNode(new BlockWireEndpoint(pos, nodeOffset + i));
-                    result.externalNodes.add(node);
-                } else {
-                    var node = new FloatingNode();
-                    result.internalNodes.add(node);
-                }
-            }
-
-            if(external) {
-            var bbs = placed.component.terminals(placed);
-            bbs.stream().map(bb -> bb.offset(placed.x / 16f, 2 / 16f, placed.y / 16f)).forEach(result.terminals::add);
-            }
-     */
-
-    /*
-                var thermalBuilders = new ArrayList<ThermalBuilder>();
-            ThermalBuilder.IEmitter thermalEmitter = () -> {
-                var thermalBuilder = new ThermalBuilder(placed.getUUID(), thermalIndex.getAndIncrement());
-                thermalBuilders.add(thermalBuilder);
-                return thermalBuilder;
-            };
-     */
-
-
 }
