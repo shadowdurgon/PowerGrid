@@ -17,16 +17,18 @@ public interface IDisplayModule {
 
     default boolean getHalfClick() {return false;}
 
-    default int getDigit() {return -1;}
-    /**
-     Gets texture for screen
-    */
+    default int getIndex() {return -1;}
+    IDisplayModule withIndex(int newIndex);
+
+    IDisplayModule withHalfClick(boolean halfClick);
+
     default ResourceLocation getDisplayTexture() {return null;}
 
-    /**
-     Gets texture for module body
-     */
-    default ResourceLocation getMoudleModel() {return null;}
+    default float getDisplayTextureSize() {return 0;}
+
+    default int getDisplayTextureCharacterCount() {return 0;}
+
+    default ResourceLocation getModuleModel() {return null;}
     String serialize();
     ItemStack toItemStack();
 

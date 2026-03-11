@@ -64,7 +64,6 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
 
     @Override
     public void appendProperties(ItemStack stack, Player player, List<Component> tooltip) {
-        Voltage.rated(resistance() * 1, player, tooltip);
     }
 
     @Override

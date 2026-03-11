@@ -17,12 +17,12 @@ public class slotData {
 
     public boolean isEmpty()    { return module == null; }
     public boolean isBlanking() { return module != null && module.getType() == IDisplayModule.ModuleType.BLANKING; }
-    public boolean isDigit()    { return module != null && module.getType() == IDisplayModule.ModuleType.DIGIT; }
+    //public boolean isDigit()    { return module != null && module.getType() == IDisplayModule.ModuleType.DIGIT; }
 
     public boolean isHalfClick() { return module.getHalfClick();}
 
-    public int getDigit() {
-        return isDigit() ? module.getDigit() : -1;
+    public int getIndex() {
+        return module != null ? module.getIndex() : -1;
     }
 
     @Nullable

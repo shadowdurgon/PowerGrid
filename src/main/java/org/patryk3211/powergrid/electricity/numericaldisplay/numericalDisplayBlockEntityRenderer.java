@@ -4,12 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
@@ -27,10 +24,10 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
             PowerGrid.asResource("block/numerical_display/onetozero");
 
 
-    private static final float SHEET_WIDTH = 64f; // 11*4 + 10*1
-    private static final float SHEET_HEIGHT = 8f;
+    //private static final float SHEET_WIDTH = 80f; // 11*4 + 10*1
+    private static final float SHEET_HEIGHT = 16f;
 
-    private static final float FRAME_WIDTH = 4f;
+    private static final float FRAME_WIDTH = 5f;
     private static final float FRAME_HEIGHT = 7f;
     private static final float FRAME_PADDING = 1f; // padding BETWEEN frames only
 
@@ -40,7 +37,9 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
     private static final float PIXEL = 1f / 16f;
     private static final float CELL_SIZE = 4f * PIXEL;
     private static final float INNER_OFFSET = 1f * PIXEL;
-    private static final float INNER_SIZE = 2f * PIXEL;
+    private static final float INNER_UD_OFFSET = .75f * PIXEL;
+    private static final float INNER_UD_SIZE = 2.5f * PIXEL;
+    private static final float INNER_RL_SIZE = 2f * PIXEL;
 
     private static final float Z_NUDGE = 0.001f;
 
@@ -79,14 +78,15 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
                 float cellY = (GRID_ROWS - 1 - row) * CELL_SIZE;
 
                 switch (slot.getModule() != null ? slot.getModule().getType().ordinal() : 0){
-                    case 1:
+                    case 1,2,3:
                         float innerX = cellX + INNER_OFFSET;
-                        float innerY = cellY + INNER_OFFSET;
+                        float innerY = cellY + INNER_UD_OFFSET;
 
-                        float frameIndex = slot.getDigit();
+                        float frameIndex = slot.getIndex();
                         if (halfClick){
                             frameIndex -= .5f;
                         }
+                        var SHEET_WIDTH = slot.getModule().getDisplayTextureSize();
 
                         float uMin = (frameIndex * (FRAME_WIDTH + FRAME_PADDING)) / SHEET_WIDTH;
                         float uMax = (frameIndex * (FRAME_WIDTH + FRAME_PADDING) + FRAME_WIDTH) / SHEET_WIDTH;
@@ -96,12 +96,12 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
                         renderQuad(matrix, buffer,
                                 slot.getModule().getDisplayTexture(),
                                 innerX, innerY,
-                                INNER_SIZE, INNER_SIZE,
+                                INNER_RL_SIZE, INNER_UD_SIZE,
                                 uMin, vMin, uMax, vMax,
                                 light, overlay);
                         break;
 
-                    case 3: renderQuad(matrix, buffer,
+                    case 4: renderQuad(matrix, buffer,
                             BLANK_PLATE_TEXTURE,
                             cellX, cellY,
                             CELL_SIZE, CELL_SIZE,

@@ -13,8 +13,18 @@ public class blankingModule implements IDisplayModule {
     }
 
     @Override
-    public ResourceLocation getMoudleModel() {
-        return IDisplayModule.super.getMoudleModel();
+    public IDisplayModule withIndex(int newDigit) {
+        return new blankingModule();
+    }
+
+    @Override
+    public IDisplayModule withHalfClick(boolean halfClick) {
+        return new blankingModule();
+    }
+
+    @Override
+    public ResourceLocation getModuleModel() {
+        return IDisplayModule.super.getModuleModel();
     }
 
     @Override

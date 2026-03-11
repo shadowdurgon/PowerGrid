@@ -17,11 +17,8 @@ package org.patryk3211.powergrid.forge;
 
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.PowerGridClient;

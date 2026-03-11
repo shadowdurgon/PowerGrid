@@ -18,9 +18,7 @@ import org.patryk3211.powergrid.collections.ModdedItems;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
 import org.patryk3211.powergrid.electricity.base.ElectricBlockEntity;
 import org.patryk3211.powergrid.electricity.base.IElectricEntity;
-import org.patryk3211.powergrid.electricity.numericaldisplay.modules.blankingModule;
-import org.patryk3211.powergrid.electricity.numericaldisplay.modules.oneToZeroNumberModule;
-import org.patryk3211.powergrid.electricity.numericaldisplay.modules.zeroToNineNumberModule;
+import org.patryk3211.powergrid.electricity.numericaldisplay.modules.*;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 
 public class numericalDisplayBlockEntity extends ElectricBlockEntity implements IElectricEntity {
@@ -70,7 +68,6 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         wires[slotIndex * 3].setState(true);
         wires[slotIndex * 3+1].setState(true);
         wires[slotIndex * 3+2].setState(false);
-        //
 
         markUpdated();
         return true;
@@ -81,7 +78,7 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         if (stack.isEmpty()) return null;
 
         if (stack.is(ModdedItems.ONETOZERO_NUMBER_MODULE.get())) {
-            return new oneToZeroNumberModule(0);
+            return new oneToZeroNumberModule(0, false);
         }
 
         if (stack.is(ModdedItems.BLANKING_MODULE.get())) {
@@ -90,6 +87,22 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
         if (stack.is(ModdedItems.ZEROTONINE_NUMBER_MODULE.get())) {
             return new zeroToNineNumberModule(0, false);
+        }
+
+        if (stack.is(ModdedItems.SYMBOL_LETTER_MODULE.get())) {
+            return new symbolLetterModule(0, false);
+        }
+
+        if (stack.is(ModdedItems.HEXADECIMAL_ALPHANUMERIC_MODULE.get())) {
+            return new hexadecimalAlphanumericModule(0, false);
+        }
+
+        if (stack.is(ModdedItems.NINETOZERO_NUMBER_MODULE.get())) {
+            return new nineToZeroNumberModule(0, false);
+        }
+
+        if (stack.is(ModdedItems.ALPHABET_LETTER_MODULE.get())) {
+            return new alphabetLetterModule(0, false);
         }
 
         return null;
@@ -145,30 +158,31 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         }
     }
 
-    public void setDigit(int slotIndex, int digit) {
+    public void setIndex(int slotIndex, int digit) {
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
-        if (modules[slotIndex] instanceof zeroToNineNumberModule) {
-            modules[slotIndex] = new zeroToNineNumberModule(digit, modules[slotIndex].getHalfClick());
+        if (modules[slotIndex] != null) {
+            modules[slotIndex] = modules[slotIndex].withIndex(digit);
             markUpdated();
         }
     }
 
-    public void add1ToDigit(int slotIndex){
+    public void add1ToIndex(int slotIndex){
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
-        if (modules[slotIndex].getType() == IDisplayModule.ModuleType.DIGIT){
-            int val = modules[slotIndex].getDigit() + 1;
-            modules[slotIndex] = new zeroToNineNumberModule(val, modules[slotIndex].getHalfClick());
+        if (modules[slotIndex] != null) {
+            int newVal = modules[slotIndex].getIndex() + 1;
+            modules[slotIndex] = modules[slotIndex].withIndex(newVal);
             markUpdated();
         }
-
-
     }
 
-    public void setDigits(int[] digits) {
-        for (int i = 0; i < Math.min(digits.length, SLOT_COUNT); i++) {
-            setDigit(i, digits[i]);
+    public void setHalfClick(int slotIndex, boolean halfClick) {
+        if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
+        if (modules[slotIndex] != null) {
+            modules[slotIndex] = modules[slotIndex].withHalfClick(halfClick);
+            markUpdated();
         }
     }
+
 
     @Override
     public void electricalTick() {
@@ -180,14 +194,17 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
             var posToReset = wires[w3];
             var slot = getSlot(i);
             if (!slot.isEmpty()) {
-                if (posToNegitive.current() >= .5 && slot.getDigit() != 10 && !slot.getModule().getHalfClick()) {
-                    add1ToDigit(i);
+                var charCount = slot.getModule().getDisplayTextureCharacterCount();
+                //every module display texture has the characters in the sprite plus a blank space and the first character again for smooth transition
+                //but im only counting characters before the blank space and adding one for the blank space and two for the transition
+                if (posToNegitive.current() >= .5 && slot.getIndex() != charCount+1 && !slot.getModule().getHalfClick()) {
+                    add1ToIndex(i);
                     setHalfClick(i, true);
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
                     markUpdated();
                 }
 
-                if (posToNegitive.current() < .5 && slot.getDigit() == 10 && posToNegitive.getState()){
+                if (posToNegitive.current() < .5 && slot.getIndex() == charCount+1 && posToNegitive.getState()){
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
                     posToNegitive.setState(false);
                     posToReset.setState(true);
@@ -196,17 +213,15 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
                     markUpdated();
                 }
 
-                if (posToNegitive.current() < .5 && slot.getModule() != null && posToNegitive.getState()) {
-                    if (slot.getModule().getHalfClick()) {
-                        setHalfClick(i, false);
-                        ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
-                        markUpdated();
-                    }
+                if (posToNegitive.current() < .5 && posToNegitive.getState() && slot.getModule().getHalfClick()) {//CHANGED
+                    setHalfClick(i, false);
+                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
+                    markUpdated();
                 }
 
-                if (posToReset.getState() && posToReset.current() >= .5 && slot.getDigit() == 10) {
-                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
-                    add1ToDigit(i);
+                if (posToReset.getState() && posToReset.current() >= .5 && slot.getIndex() == charCount+1) {
+                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
+                    add1ToIndex(i);
                     setHalfClick(i, true);
                     posToNegitive.setState(true);
                     posToReset.setState(false);
@@ -214,20 +229,12 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
                     markUpdated();
                 }
 
-                if (slot.getDigit() >= 11 && !slot.isHalfClick()){
-                    setDigit(i, 0);
+                if (slot.getIndex() >= charCount+2 && !slot.isHalfClick()){
+                    setIndex(i, 0);
                     markUpdated();
                 }
             }
             w1+=3; w2+=3; w3+=3;
-        }
-    }
-
-    public void setHalfClick(int slotIndex, boolean halfClick) {
-        if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
-        if (modules[slotIndex] instanceof zeroToNineNumberModule current) {
-            modules[slotIndex] = new zeroToNineNumberModule(current.getDigit(), halfClick);
-            markUpdated();
         }
     }
 
