@@ -1,9 +1,8 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay.modules;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import org.patryk3211.powergrid.PowerGrid;
-import org.patryk3211.powergrid.collections.ModdedItems;
+import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
 
 public class oneToZeroNumberModule implements IDisplayModule {
@@ -30,6 +29,7 @@ public class oneToZeroNumberModule implements IDisplayModule {
     public float getDisplayTextureSize() {
         return 80f;
     }
+
     public int getDisplayTextureCharacterCount() {
         return 9;
     }
@@ -39,16 +39,17 @@ public class oneToZeroNumberModule implements IDisplayModule {
         return PowerGrid.texture("block/numerical_display/onetozero");
     }
 
+    public DisplayModuleType getDisplayModuleType() {
+        return DisplayModuleType.ONE_TO_ZERO;
+    }
+
     public boolean getHalfClick() {
         return halfClick;
     }
 
     @Override public ModuleType getType() { return ModuleType.DIGIT; }
-    @Override public int getIndex() { return Index; }
-    @Override public String serialize() { return "onetozero:" + Index + ":" + halfClick; }
 
-    @Override
-    public ItemStack toItemStack() {
-        return new ItemStack(ModdedItems.ONETOZERO_NUMBER_MODULE.get());
-    }
+    @Override public int getIndex() { return Index; }
+
+    @Override public String serialize() { return "onetozero:" + Index + ":" + halfClick; }
 }

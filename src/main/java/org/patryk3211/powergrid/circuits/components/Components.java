@@ -19,7 +19,6 @@ import com.simibubi.create.AllItems;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import org.patryk3211.powergrid.collections.ModdedBlocks;
 import org.patryk3211.powergrid.collections.ModdedItems;
-import org.patryk3211.powergrid.electricity.numericaldisplay.items.*;
 
 import static org.patryk3211.powergrid.PowerGrid.REGISTRATE;
 
@@ -232,65 +231,16 @@ public class Components {
             .item(ModdedItems.VARISTOR)
             .register();
 
-    public static final RegistryEntry<Component, zeroToNineModuleItem> ZEROTOONE_DISPLAY_MODULE = REGISTRATE.component("zerotoone_display_module", zeroToNineModuleItem::new)
+    public static final RegistryEntry<Component, NumericalDisplayComponent> DISPLAY_MODULE = REGISTRATE.component("display_module", NumericalDisplayComponent::new)
             .footprint(4, 4, b -> b
                     .addPad(0, 1, 0, "relay.coil", null)
                     .addPad(3, 2, 1, "relay.coil", null)
                     .addPad(2, 0, 2, "numerical.reset", "R")
                     .withItem().withOutline()
             )
-            .item(ModdedItems.ZEROTONINE_NUMBER_MODULE)
+            .item(ModdedItems.DISPLAY_MODULE)
             .register();
 
-    public static final RegistryEntry<Component, oneToZeroModuleItem> ONETOZERO_DISPLAY_MODULE = REGISTRATE.component("onetozero_display_module", oneToZeroModuleItem::new)
-            .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "relay.coil", null)
-                    .addPad(3, 2, 1, "relay.coil", null)
-                    .addPad(2, 0, 2, "numerical.reset", "R")
-                    .withItem().withOutline()
-            )
-            .item(ModdedItems.ONETOZERO_NUMBER_MODULE)
-            .register();
-
-    public static final RegistryEntry<Component, alphabetModuleItem> APLHABET_DISPLAY_MODULE = REGISTRATE.component("alphabet_display_module", alphabetModuleItem::new)
-            .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "relay.coil", null)
-                    .addPad(3, 2, 1, "relay.coil", null)
-                    .addPad(2, 0, 2, "numerical.reset", "R")
-                    .withItem().withOutline()
-            )
-            .item(ModdedItems.ALPHABET_LETTER_MODULE)
-            .register();
-
-    public static final RegistryEntry<Component, hexadecimalModuleItem> HEXADECIMAL_DISPLAY_MODULE = REGISTRATE.component("hexadecimal_display_module", hexadecimalModuleItem::new)
-            .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "relay.coil", null)
-                    .addPad(3, 2, 1, "relay.coil", null)
-                    .addPad(2, 0, 2, "numerical.reset", "R")
-                    .withItem().withOutline()
-            )
-            .item(ModdedItems.HEXADECIMAL_ALPHANUMERIC_MODULE)
-            .register();
-
-    public static final RegistryEntry<Component, nineToZeroModuleItem> NINETOZERO_DISPLAY_MODULE = REGISTRATE.component("ninetozero_display_module", nineToZeroModuleItem::new)
-            .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "relay.coil", null)
-                    .addPad(3, 2, 1, "relay.coil", null)
-                    .addPad(2, 0, 2, "numerical.reset", "R")
-                    .withItem().withOutline()
-            )
-            .item(ModdedItems.NINETOZERO_NUMBER_MODULE)
-            .register();
-
-    public static final RegistryEntry<Component, symbolModuleItem> SYMBOL_DISPLAY_MODULE = REGISTRATE.component("symbol_display_module", symbolModuleItem::new)
-            .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "relay.coil", null)
-                    .addPad(3, 2, 1, "relay.coil", null)
-                    .addPad(2, 0, 2, "numerical.reset", "R")
-                    .withItem().withOutline()
-            )
-            .item(ModdedItems.SYMBOL_LETTER_MODULE)
-            .register();
 
     @SuppressWarnings("EmptyMethod")
     public static void register() { /* Initialize static fields. */ }

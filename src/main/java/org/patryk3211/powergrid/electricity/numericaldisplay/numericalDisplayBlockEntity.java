@@ -1,5 +1,7 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay;
 
+import com.simibubi.create.foundation.blockEntity.behaviour.*;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -7,6 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -18,48 +21,122 @@ import org.patryk3211.powergrid.collections.ModdedItems;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
 import org.patryk3211.powergrid.electricity.base.ElectricBlockEntity;
 import org.patryk3211.powergrid.electricity.base.IElectricEntity;
+import org.patryk3211.powergrid.electricity.base.ThermalBehaviour;
 import org.patryk3211.powergrid.electricity.numericaldisplay.modules.*;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
+
+import java.util.List;
 
 public class numericalDisplayBlockEntity extends ElectricBlockEntity implements IElectricEntity {
     private SwitchedWire[] wires;
     public static final int SLOT_COUNT = 16;
+    private ScrollOptionBehaviour<DisplayModuleType> moduleTypeBehaviour;
+    public int lastHitSlot = 0;
 
-    private final IDisplayModule[] modules = new IDisplayModule[SLOT_COUNT];
+    public final IDisplayModule[] modules = new IDisplayModule[SLOT_COUNT];
 
     public numericalDisplayBlockEntity(BlockPos pos, BlockState state) {
         super(ModdedBlockEntities.NUMERICAL_DISPLAY.get(), pos, state);
     }
+
+    @Override
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        super.addBehaviours(behaviours);
+
+        moduleTypeBehaviour = new ScrollOptionBehaviour<>(
+                DisplayModuleType.class,
+                Component.translatable("Module Type"),
+                this,
+                new SingleSlotTransform(this)
+        );
+        moduleTypeBehaviour.setValue(0);
+        moduleTypeBehaviour.withCallback(value -> onSlotTypeChanged(lastHitSlot, value));
+        behaviours.add(moduleTypeBehaviour);
+    }
+
+    private void onSlotTypeChanged(int slot, int value) {
+        DisplayModuleType type = DisplayModuleType.values()[value];
+        switch (type) {
+            case ZERO_TO_NINE -> modules[slot] = new zeroToNineNumberModule(0, false);
+            case NINE_TO_ZERO -> modules[slot] = new nineToZeroNumberModule(0, false);
+            case ONE_TO_ZERO -> modules[slot] = new oneToZeroNumberModule(0, false);
+            case HEXADECIMAL -> modules[slot] = new hexadecimalAlphanumericModule(0, false);
+            case SYMBOLS -> modules[slot] = new symbolLetterModule(0, false);
+            case ALPHABET -> modules[slot] = new alphabetLetterModule(0, false);
+        }
+        markUpdated();
+    }
+
+    public void syncBehaviourToSlot(int slot) {
+        if (modules[slot] == null) return;
+        moduleTypeBehaviour.value = modules[slot].getDisplayModuleType().ordinal();
+    }
+
+
 
     public slotData getSlot(int index) {
         if (index < 0 || index >= SLOT_COUNT) return slotData.empty();
         return new slotData(modules[index]);
     }
 
-    public boolean interact(int slotIndex, Player player) {
+//    public boolean interact(int slotIndex, Player player) {
+//        if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return false;
+//
+//        ItemStack held = player.getMainHandItem();
+//        IDisplayModule heldModule = resolveModule(held);
+//        IDisplayModule current = modules[slotIndex];
+//
+//        if (held.isEmpty() && player.isCrouching()) {
+//            // Sneaking + empty hand = remove module, return item to player
+//            if (current == null) return false;
+//            if (!player.getInventory().add(current.toItemStack())) {
+//                player.drop(current.toItemStack(), false);
+//            }
+//            modules[slotIndex] = null;
+//            markUpdated();
+//
+//            return true;
+//        }
+//
+//        if (heldModule == null) return false;
+//
+//        if (current != null) {
+//            if (!player.getInventory().add(current.toItemStack())) {
+//                player.drop(current.toItemStack(), false);
+//            }
+//        }
+//
+//        modules[slotIndex] = heldModule;
+//        if (!player.isCreative()) held.shrink(1);
+//        wires[slotIndex * 3].setState(true);
+//        wires[slotIndex * 3+1].setState(true);
+//        wires[slotIndex * 3+2].setState(false);
+//
+//        markUpdated();
+//        return true;
+//    }
+
+    public boolean interact(int slotIndex, Player player){
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return false;
 
         ItemStack held = player.getMainHandItem();
         IDisplayModule heldModule = resolveModule(held);
         IDisplayModule current = modules[slotIndex];
-
         if (held.isEmpty() && player.isCrouching()) {
-            // Sneaking + empty hand = remove module, return item to player
             if (current == null) return false;
-            if (!player.getInventory().add(current.toItemStack())) {
-                player.drop(current.toItemStack(), false);
+            if (!player.getInventory().add(new ItemStack(ModdedItems.DISPLAY_MODULE.get()))) {
+                player.drop(new ItemStack(ModdedItems.DISPLAY_MODULE.get()), false);
             }
             modules[slotIndex] = null;
             markUpdated();
-
             return true;
         }
 
         if (heldModule == null) return false;
 
         if (current != null) {
-            if (!player.getInventory().add(current.toItemStack())) {
-                player.drop(current.toItemStack(), false);
+            if (!player.getInventory().add(new ItemStack(ModdedItems.DISPLAY_MODULE.get()))) {
+                player.drop(new ItemStack(ModdedItems.DISPLAY_MODULE.get()), false);
             }
         }
 
@@ -73,40 +150,51 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         return true;
     }
 
+
+
     @Nullable
     private IDisplayModule resolveModule(ItemStack stack) {
         if (stack.isEmpty()) return null;
-
-        if (stack.is(ModdedItems.ONETOZERO_NUMBER_MODULE.get())) {
-            return new oneToZeroNumberModule(0, false);
+        if (stack.is(ModdedItems.DISPLAY_MODULE.get())) {
+            return new zeroToNineNumberModule(0, false); // type set via ScrollOptionBehaviour
         }
-
-        if (stack.is(ModdedItems.BLANKING_MODULE.get())) {
-            return new blankingModule();
-        }
-
-        if (stack.is(ModdedItems.ZEROTONINE_NUMBER_MODULE.get())) {
-            return new zeroToNineNumberModule(0, false);
-        }
-
-        if (stack.is(ModdedItems.SYMBOL_LETTER_MODULE.get())) {
-            return new symbolLetterModule(0, false);
-        }
-
-        if (stack.is(ModdedItems.HEXADECIMAL_ALPHANUMERIC_MODULE.get())) {
-            return new hexadecimalAlphanumericModule(0, false);
-        }
-
-        if (stack.is(ModdedItems.NINETOZERO_NUMBER_MODULE.get())) {
-            return new nineToZeroNumberModule(0, false);
-        }
-
-        if (stack.is(ModdedItems.ALPHABET_LETTER_MODULE.get())) {
-            return new alphabetLetterModule(0, false);
-        }
-
         return null;
     }
+
+//    @Nullable
+//    private IDisplayModule resolveModule(ItemStack stack) {
+//        if (stack.isEmpty()) return null;
+//
+//        if (stack.is(ModdedItems.ONETOZERO_NUMBER_MODULE.get())) {
+//            return new oneToZeroNumberModule(0, false);
+//        }
+//
+//        if (stack.is(ModdedItems.BLANKING_MODULE.get())) {
+//            return new blankingModule();
+//        }
+//
+//        if (stack.is(ModdedItems.ZEROTONINE_NUMBER_MODULE.get())) {
+//            return new zeroToNineNumberModule(0, false);
+//        }
+//
+//        if (stack.is(ModdedItems.SYMBOL_LETTER_MODULE.get())) {
+//            return new symbolLetterModule(0, false);
+//        }
+//
+//        if (stack.is(ModdedItems.HEXADECIMAL_ALPHANUMERIC_MODULE.get())) {
+//            return new hexadecimalAlphanumericModule(0, false);
+//        }
+//
+//        if (stack.is(ModdedItems.NINETOZERO_NUMBER_MODULE.get())) {
+//            return new nineToZeroNumberModule(0, false);
+//        }
+//
+//        if (stack.is(ModdedItems.ALPHABET_LETTER_MODULE.get())) {
+//            return new alphabetLetterModule(0, false);
+//        }
+//
+//        return null;
+//    }
 
     private void markUpdated() {
         setChanged();
@@ -236,6 +324,11 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
             }
             w1+=3; w2+=3; w3+=3;
         }
+    }
+
+    @Override
+    public @Nullable ThermalBehaviour specifyThermalBehaviour() {
+        return super.specifyThermalBehaviour();
     }
 
     public numericalDisplayBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {

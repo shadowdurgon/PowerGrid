@@ -1,41 +1,37 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay;
 
 import com.simibubi.create.foundation.block.IBE;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.Nullable;
+import org.patryk3211.powergrid.collections.ModIcons;
 import org.patryk3211.powergrid.collections.ModdedBlockEntities;
+import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.electricity.base.HorizontalElectricBlock;
 import org.patryk3211.powergrid.electricity.base.IDecoratedTerminal;
-import org.patryk3211.powergrid.electricity.base.ITerminalPlacement;
 import org.patryk3211.powergrid.electricity.base.TerminalBoundingBox;
 import org.patryk3211.powergrid.electricity.info.IHaveElectricProperties;
-import org.patryk3211.powergrid.electricity.info.Voltage;
 
 import java.util.List;
 
 public class numericalDisplayBlock extends HorizontalElectricBlock implements IBE<numericalDisplayBlockEntity>, IHaveElectricProperties {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    private static ValueSettingsBoard BOARD;
 
     private static final VoxelShape NORTHSHAPE = Shapes.or(
             box(0,0,0 ,16,16,13)
@@ -65,6 +61,73 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
     @Override
     public void appendProperties(ItemStack stack, Player player, List<Component> tooltip) {
     }
+
+//    @Override
+//    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+//        Direction facing = state.getValue(numericalDisplayBlock.HORIZONTAL_FACING);
+//        if (hit.getDirection() != facing) return InteractionResult.PASS;
+//
+//        Vec3 hitVec = hit.getLocation();
+//
+//        double localX = hitVec.x - pos.getX();
+//        double localY = hitVec.y - pos.getY();
+//        double localZ = hitVec.z - pos.getZ();
+//
+//        double faceU, faceV;
+//        switch (facing) {
+//            case NORTH -> { faceU = localX;       faceV = 1.0 - localY; }
+//            case SOUTH -> { faceU = 1.0 - localX; faceV = 1.0 - localY; }
+//            case WEST  -> { faceU = 1.0 - localZ; faceV = 1.0 - localY; }
+//            case EAST  -> { faceU = localZ;       faceV = 1.0 - localY; }
+//            default    -> { return InteractionResult.PASS; }
+//        }
+//
+//        int col = Math.clamp((int)(faceU * 4), 0, 3);
+//        int row = Math.clamp((int)(faceV * 4), 0, 3);
+//        int slotIndex = row * 4 + col;
+//
+//        if (world.isClientSide) return InteractionResult.SUCCESS;
+//
+//        BlockEntity be = world.getBlockEntity(pos);
+//        if (be instanceof numericalDisplayBlockEntity display) {
+//            //display.interact(slotIndex, player);
+//            var value = 0;
+//            if(BOARD == null) {
+//                var label = Lang.translateDirect("devices.numerical_display.display");
+//                BOARD = CustomValueSettingsScreen.makeBoard(
+//                        label,
+//                        100, 10,
+//                        List.of(Component.literal("Value")));
+//            }
+//            CustomValueSettingsScreen.beginInteraction(() -> new CustomValueSettingsScreen(
+//                    be.getBlockPos(), BOARD, new ValueSettingsBehaviour.ValueSettings(0, value),
+//                    setting -> {
+//                        display.interact(setting.value(), player);
+//                    }
+//            ));
+//        }
+//        return InteractionResult.SUCCESS;
+//    }
+//
+//    public enum ClutchMode implements INamedIconOptions {
+//        GENERATOR, MOTOR;
+//
+//        @Override
+//        public AllIcons getIcon() {
+//            return switch(this) {
+//                case GENERATOR -> ModIcons.I_GENERATOR;
+//                case MOTOR -> ModIcons.I_MOTOR;
+//            };
+//        }
+//
+//        @Override
+//        public String getTranslationKey() {
+//            return switch(this) {
+//                case GENERATOR -> "powergrid.gui.clutch_mode.generator";
+//                case MOTOR -> "powergrid.gui.clutch_mode.motor";
+//            };
+//        }
+//    }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level,

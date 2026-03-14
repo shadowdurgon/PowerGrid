@@ -32,7 +32,6 @@ import org.patryk3211.powergrid.config.CWire;
 import org.patryk3211.powergrid.electricity.light.bulb.GrowthLamp;
 import org.patryk3211.powergrid.electricity.light.bulb.LightBulb;
 import org.patryk3211.powergrid.electricity.light.bulb.LvLightBulb;
-import org.patryk3211.powergrid.electricity.numericaldisplay.items.blankingModuleItem;
 import org.patryk3211.powergrid.electricity.sim.DebugItem;
 import org.patryk3211.powergrid.electricity.wire.WireItem;
 import org.patryk3211.powergrid.electricity.wire.WireProperties;
@@ -228,32 +227,8 @@ public class ModdedItems {
     public static final ItemEntry<PunchCardItem> PUNCH_CARD = REGISTRATE.item("punch_card", PunchCardItem::new)
             .register();
 
-    public static final ItemEntry<Item> ONETOZERO_NUMBER_MODULE = REGISTRATE.item("onetozero_module", Item::new)
-            .lang("One To Zero Module")
-            .register();
-
-    public static final ItemEntry<blankingModuleItem> BLANKING_MODULE = REGISTRATE.item("blanking_module", blankingModuleItem::new)
-            .lang("Blanking Plate")
-            .register();
-
-    public static final ItemEntry<Item> ZEROTONINE_NUMBER_MODULE = REGISTRATE.item("zerotonine_module", Item::new)
-            .lang("Zero to nine Module")
-            .register();
-
-    public static final ItemEntry<Item> SYMBOL_LETTER_MODULE = REGISTRATE.item("symbole_module", Item::new)
-            .lang("Symbols Module")
-            .register();
-
-    public static final ItemEntry<Item> HEXADECIMAL_ALPHANUMERIC_MODULE = REGISTRATE.item("hexadecimal_module", Item::new)
-            .lang("Hexadecimal Module")
-            .register();
-
-    public static final ItemEntry<Item> NINETOZERO_NUMBER_MODULE = REGISTRATE.item("ninetozero_module", Item::new)
-            .lang("Nine to zero Module")
-            .register();
-
-    public static final ItemEntry<Item> ALPHABET_LETTER_MODULE = REGISTRATE.item("alphabet_module", Item::new)
-            .lang("Alphabet Module")
+    public static final ItemEntry<Item> DISPLAY_MODULE = REGISTRATE.item("display_module", Item::new)
+            .lang("Display Module")
             .register();
 
     @SuppressWarnings("EmptyMethod")

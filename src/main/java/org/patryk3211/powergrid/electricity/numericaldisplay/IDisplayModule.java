@@ -15,6 +15,8 @@ public interface IDisplayModule {
 
     ModuleType getType();
 
+    DisplayModuleType getDisplayModuleType();
+
     default boolean getHalfClick() {return false;}
 
     default int getIndex() {return -1;}
@@ -30,6 +32,6 @@ public interface IDisplayModule {
 
     default ResourceLocation getModuleModel() {return null;}
     String serialize();
-    ItemStack toItemStack();
+    //ItemStack toItemStack();
 
 }

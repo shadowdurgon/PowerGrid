@@ -1,55 +1,64 @@
 package org.patryk3211.powergrid.circuits.components;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.circuits.circuitboard.CircuitBoardBlockEntity;
 import org.patryk3211.powergrid.circuits.circuitboard.ComponentCircuitBuilder;
-import org.patryk3211.powergrid.circuits.components.properties.BooleanProperty;
-import org.patryk3211.powergrid.circuits.components.properties.ComponentProperty;
-import org.patryk3211.powergrid.circuits.components.properties.FloatProperty;
-import org.patryk3211.powergrid.circuits.components.properties.IntProperty;
+import org.patryk3211.powergrid.circuits.components.properties.*;
 import org.patryk3211.powergrid.circuits.schematic.ComponentFootprint;
 import org.patryk3211.powergrid.circuits.schematic.PlacedComponent;
 import org.patryk3211.powergrid.circuits.thermal.ThermalBuilder;
+import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
 
+import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
+import org.patryk3211.powergrid.network.packets.UpdateComponentBiPacket;
+import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
 
-public class NumericalDisplayComponent extends OrientableComponent implements IRenderedComponent{
+public class NumericalDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
     private SwitchedWire[] wires;
     public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_threshold", 13, 1, 30);
-    public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "numerical_display_index", 0, 0, 30).hidden().cast();
+    public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "numerical_display_index", 1, 0, 30).hidden().cast();
+    public static final IntProperty CURRENT_MODULE = new IntProperty(PowerGrid.MOD_ID, "numerical_display_module", 0, 0, 10).hidden().cast();
+    public static final StringProperty DISPLAYED_TEXTURE = new StringProperty(PowerGrid.MOD_ID, "numerical_display_texture", "zerotonine").hidden().cast();
     public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_half_click").hidden().cast();
+    public static final FloatProperty SPRITE_WIDTH = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_sprite_width", 80, 16, 300).hidden().cast();
+    public static final FloatProperty CHARACTER_COUNT = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_character_count", 9, 0, 50).hidden().cast();
+    public static final BooleanProperty WIRE_RESET = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_reset").hidden().cast();
 
-    private final ResourceLocation texture;
-    private final float characterCount;
-    private final float spriteWidth;
+    private ValueSettingsBoard board = null;
+
 
     public NumericalDisplayComponent(ComponentFootprint footprint, ResourceLocation texture, Float characterCount, Float spriteWidth) {
         super(footprint);
-        this.texture = texture;
-        this.characterCount = characterCount;
-        this.spriteWidth= spriteWidth;
     }
 
-    //private static final float SHEET_WIDTH = 80f; // 11*4 + 10*1
-    private static final float SHEET_HEIGHT = 16f;
+    public NumericalDisplayComponent(ComponentFootprint footprint) {
+        super(footprint);
+    }
 
+    private static final float SHEET_HEIGHT = 16f;
     private static final float FRAME_WIDTH = 5f;
     private static final float FRAME_HEIGHT = 7f;
-    private static final float FRAME_PADDING = 1f; // padding BETWEEN frames only
-
+    private static final float FRAME_PADDING = 1f;
     private static final int GRID_COLS = 4;
     private static final int GRID_ROWS = 4;
-
     private static final float PIXEL = 1f / 16f;
     private static final float CELL_SIZE = 4f * PIXEL;
     private static final float INNER_OFFSET = 1f * PIXEL;
@@ -57,13 +66,62 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
     private static final float INNER_UD_SIZE = 2.5f * PIXEL;
     private static final float INNER_RL_SIZE = 2f * PIXEL;
     private static final float INNER_SIZE = 2f * PIXEL;
-
     private static final float Y_NUDGE = 0.0001f;
+
+    private void setCurrentModule(PlacedComponent component){
+        var Module = component.get(CURRENT_MODULE);
+        component.set(INDEX, 0);
+
+
+        switch (Module){
+            case 0:
+                component.set(DISPLAYED_TEXTURE, "zerotonine");
+                component.set(SPRITE_WIDTH, 80f);
+                component.set(CHARACTER_COUNT, 9f);
+                component.set(CURRENT_MODULE, 0);
+                break;
+
+            case 1:
+                component.set(DISPLAYED_TEXTURE, "ninetozero");
+                component.set(SPRITE_WIDTH, 80f);
+                component.set(CHARACTER_COUNT, 9f);
+                component.set(CURRENT_MODULE, 1);
+                break;
+
+            case 2:
+                component.set(DISPLAYED_TEXTURE, "onetozero");
+                component.set(SPRITE_WIDTH, 80f);
+                component.set(CHARACTER_COUNT, 9f);
+                component.set(CURRENT_MODULE, 2);
+                break;
+
+            case 3:
+                component.set(DISPLAYED_TEXTURE,"zerotof");
+                component.set(SPRITE_WIDTH, 112f);
+                component.set(CHARACTER_COUNT, 15f);
+                component.set(CURRENT_MODULE, 3);
+                break;
+
+            case 4:
+                component.set(DISPLAYED_TEXTURE, "symbols");
+                component.set(SPRITE_WIDTH, 80f);
+                component.set(CHARACTER_COUNT, 8f);
+                component.set(CURRENT_MODULE, 4);
+                break;
+
+            case 5:
+                component.set(DISPLAYED_TEXTURE, "alphabet");
+                component.set(SPRITE_WIDTH, 176f);
+                component.set(CHARACTER_COUNT, 25f);
+                component.set(CURRENT_MODULE, 5);
+                break;
+        }
+    }
 
     @Override
     protected void addProperties(ImmutableCollection.Builder<ComponentProperty<?>> properties) {
         super.addProperties(properties);
-        properties.add(THRESHOLD_VOLTAGE, INDEX, HALF_CLICK, power(25));
+        properties.add(THRESHOLD_VOLTAGE, INDEX, HALF_CLICK, CURRENT_MODULE, DISPLAYED_TEXTURE, SPRITE_WIDTH, CHARACTER_COUNT, WIRE_RESET, power(25));
     }
 
     @Override
@@ -76,9 +134,16 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         var posToReset = (SwitchedWire) placed.wires.get(2);
         var posToNegitiveCurrent = Math.abs(posToNegitive.current());
         var posToResetCurrent = Math.abs(posToReset.current());
-        var charCount = this.characterCount;
+        var charCount = placed.get(CHARACTER_COUNT);
         //every module display texture has the characters in the sprite plus a blank space and the first character again for smooth transition
         //but im only counting characters before the blank space and adding one for the blank space and two for the transition
+
+        if (placed.get(WIRE_RESET) == true){
+            resetToGround.setState(true);
+            posToNegitive.setState(true);
+            posToReset.setState(false);
+            placed.set(WIRE_RESET, false);
+        }
         if(posToNegitive.isConverged()) {
 
             if (posToNegitiveCurrent >= .5 && placed.get(INDEX) != charCount+1 && !placed.get(HALF_CLICK)) {
@@ -118,7 +183,6 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
             }
 
             if (placed.get(INDEX) >= charCount+2 && !placed.get(HALF_CLICK)){
-                //setDigit(i, 0);
                 placed.set(INDEX, 0);
                 placed.notifyClients(INDEX);
             }
@@ -169,17 +233,18 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         if (halfClick){
             frameIndex -= .5f;
         }
+        var temp = "block/numerical_display/" + placed.get(DISPLAYED_TEXTURE);
 
         float innerX = 0 + INNER_OFFSET;
         float innerY = 0 + INNER_UD_OFFSET;
 
-        float uMin = (frameIndex * (FRAME_WIDTH + FRAME_PADDING)) / this.spriteWidth;
-        float uMax = (frameIndex * (FRAME_WIDTH + FRAME_PADDING) + FRAME_WIDTH) / this.spriteWidth;
+        float uMin = (frameIndex * (FRAME_WIDTH + FRAME_PADDING)) / placed.get(SPRITE_WIDTH);
+        float uMax = (frameIndex * (FRAME_WIDTH + FRAME_PADDING) + FRAME_WIDTH) / placed.get(SPRITE_WIDTH);
         float vMin = 0f;
         float vMax = FRAME_HEIGHT / SHEET_HEIGHT;
 
         renderQuad(matrix, buffer,
-                this.texture,
+                PowerGrid.texture(temp),
                 innerX, innerY,
                 INNER_RL_SIZE, INNER_UD_SIZE,
                 uMin, vMin, uMax, vMax,
@@ -209,5 +274,44 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         vc.addVertex(matrix, x + width, 0f, z + height).setColor(255, 255, 255, 255)
                 .setUv(uMax, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
+    }
+
+    @Override
+    public VoxelShape getShape(@NotNull PlacedComponent placed) {
+        return IInteractableComponent.extrudedFootprint(placed, 8 / 16f);
+    }
+
+    @Override
+    public InteractionResult use(CircuitBoardBlockEntity be, PlacedComponent component, Player player) {
+        component.onClientWorld(() -> world -> {
+            if (board == null) {
+                board = new ValueSettingsBoard(
+                        Component.literal("Module Type"),
+                        DisplayModuleType.values().length - 1,
+                        1,
+                        ImmutableList.of(Component.literal("Index")),
+                        new ValueSettingsFormatter.ScrollOptionSettingsFormatter(DisplayModuleType.values())
+                );
+            }
+
+            var value = component.get(CURRENT_MODULE);
+
+            CustomValueSettingsScreen.beginInteraction(() -> new CustomValueSettingsScreen(
+                    be.getBlockPos(), board,
+                    new ValueSettingsBehaviour.ValueSettings(0, value),
+                    setting -> {
+                        component.set(CURRENT_MODULE, setting.value());
+                        setCurrentModule(component);
+                        component.set(WIRE_RESET, true);
+                        ModdedPackets.sendToServer(new UpdateComponentBiPacket(be, component, CURRENT_MODULE));
+                        ModdedPackets.sendToServer(new UpdateComponentBiPacket(be, component, DISPLAYED_TEXTURE));
+                        ModdedPackets.sendToServer(new UpdateComponentBiPacket(be, component, CHARACTER_COUNT));
+                        ModdedPackets.sendToServer(new UpdateComponentBiPacket(be, component, SPRITE_WIDTH));
+                        ModdedPackets.sendToServer(new UpdateComponentBiPacket(be, component, INDEX));
+                        ModdedPackets.sendToServer(new UpdateComponentBiPacket(be, component, WIRE_RESET));
+                    }
+            ));
+        });
+        return InteractionResult.SUCCESS;
     }
 }

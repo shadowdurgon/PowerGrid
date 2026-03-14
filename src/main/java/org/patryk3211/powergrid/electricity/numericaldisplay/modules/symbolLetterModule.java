@@ -1,9 +1,8 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay.modules;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import org.patryk3211.powergrid.PowerGrid;
-import org.patryk3211.powergrid.collections.ModdedItems;
+import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
 
 public class symbolLetterModule implements IDisplayModule {
@@ -30,6 +29,7 @@ public class symbolLetterModule implements IDisplayModule {
     public float getDisplayTextureSize() {
         return 80f;
     }
+
     public int getDisplayTextureCharacterCount() {
         return 8;
     }
@@ -37,6 +37,10 @@ public class symbolLetterModule implements IDisplayModule {
     @Override
     public ResourceLocation getDisplayTexture() {
         return PowerGrid.texture("block/numerical_display/symbols");
+    }
+
+    public DisplayModuleType getDisplayModuleType() {
+        return DisplayModuleType.SYMBOLS;
     }
 
     public boolean getHalfClick() {
@@ -47,14 +51,12 @@ public class symbolLetterModule implements IDisplayModule {
     public ModuleType getType() {
         return ModuleType.LETTER;
     }
+
     @Override public int getIndex() {
         return Index;
     }
+
     @Override public String serialize() {
         return "symbol:" + Index + ":" + halfClick;
-    }
-    @Override
-    public ItemStack toItemStack() {
-        return new ItemStack(ModdedItems.SYMBOL_LETTER_MODULE.get());
     }
 }
