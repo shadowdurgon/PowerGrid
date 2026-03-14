@@ -31,12 +31,10 @@ import java.util.List;
 
 public class numericalDisplayBlock extends HorizontalElectricBlock implements IBE<numericalDisplayBlockEntity>, IHaveElectricProperties {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static ValueSettingsBoard BOARD;
 
     private static final VoxelShape NORTHSHAPE = Shapes.or(
             box(0,0,0 ,16,16,13)
     );
-
 
     public numericalDisplayBlock(Properties settings) {
         super(settings);
@@ -62,78 +60,11 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
     public void appendProperties(ItemStack stack, Player player, List<Component> tooltip) {
     }
 
-//    @Override
-//    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-//        Direction facing = state.getValue(numericalDisplayBlock.HORIZONTAL_FACING);
-//        if (hit.getDirection() != facing) return InteractionResult.PASS;
-//
-//        Vec3 hitVec = hit.getLocation();
-//
-//        double localX = hitVec.x - pos.getX();
-//        double localY = hitVec.y - pos.getY();
-//        double localZ = hitVec.z - pos.getZ();
-//
-//        double faceU, faceV;
-//        switch (facing) {
-//            case NORTH -> { faceU = localX;       faceV = 1.0 - localY; }
-//            case SOUTH -> { faceU = 1.0 - localX; faceV = 1.0 - localY; }
-//            case WEST  -> { faceU = 1.0 - localZ; faceV = 1.0 - localY; }
-//            case EAST  -> { faceU = localZ;       faceV = 1.0 - localY; }
-//            default    -> { return InteractionResult.PASS; }
-//        }
-//
-//        int col = Math.clamp((int)(faceU * 4), 0, 3);
-//        int row = Math.clamp((int)(faceV * 4), 0, 3);
-//        int slotIndex = row * 4 + col;
-//
-//        if (world.isClientSide) return InteractionResult.SUCCESS;
-//
-//        BlockEntity be = world.getBlockEntity(pos);
-//        if (be instanceof numericalDisplayBlockEntity display) {
-//            //display.interact(slotIndex, player);
-//            var value = 0;
-//            if(BOARD == null) {
-//                var label = Lang.translateDirect("devices.numerical_display.display");
-//                BOARD = CustomValueSettingsScreen.makeBoard(
-//                        label,
-//                        100, 10,
-//                        List.of(Component.literal("Value")));
-//            }
-//            CustomValueSettingsScreen.beginInteraction(() -> new CustomValueSettingsScreen(
-//                    be.getBlockPos(), BOARD, new ValueSettingsBehaviour.ValueSettings(0, value),
-//                    setting -> {
-//                        display.interact(setting.value(), player);
-//                    }
-//            ));
-//        }
-//        return InteractionResult.SUCCESS;
-//    }
-//
-//    public enum ClutchMode implements INamedIconOptions {
-//        GENERATOR, MOTOR;
-//
-//        @Override
-//        public AllIcons getIcon() {
-//            return switch(this) {
-//                case GENERATOR -> ModIcons.I_GENERATOR;
-//                case MOTOR -> ModIcons.I_MOTOR;
-//            };
-//        }
-//
-//        @Override
-//        public String getTranslationKey() {
-//            return switch(this) {
-//                case GENERATOR -> "powergrid.gui.clutch_mode.generator";
-//                case MOTOR -> "powergrid.gui.clutch_mode.motor";
-//            };
-//        }
-//    }
-
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level,
-                                               BlockPos pos, Player player, BlockHitResult hit) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 
         Direction facing = state.getValue(numericalDisplayBlock.HORIZONTAL_FACING);
+
         if (hit.getDirection() != facing) return InteractionResult.PASS;
 
         Vec3 hitVec = hit.getLocation();
@@ -143,6 +74,7 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
         double localZ = hitVec.z - pos.getZ();
 
         double faceU, faceV;
+
         switch (facing) {
             case NORTH -> { faceU = localX;       faceV = 1.0 - localY; }
             case SOUTH -> { faceU = 1.0 - localX; faceV = 1.0 - localY; }
@@ -158,6 +90,7 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
         if (level.isClientSide) return InteractionResult.SUCCESS;
 
         BlockEntity be = level.getBlockEntity(pos);
+
         if (be instanceof numericalDisplayBlockEntity display) {
             display.interact(slotIndex, player);
         }

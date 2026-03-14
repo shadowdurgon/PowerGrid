@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelAccessor;
@@ -48,11 +47,11 @@ public class SingleSlotTransform extends ValueBoxTransform {
             double v = ((3 - row) * 4 + 2) / 16.0;
 
             switch (facing) {
-                case NORTH -> { slotX = u;        slotY = v; slotZ = 0.0; }
-                case SOUTH -> { slotX = 1.0 - u;  slotY = v; slotZ = 1.0; }
-                case WEST  -> { slotX = 0.0;      slotY = v; slotZ = 1.0 - u; }
-                case EAST  -> { slotX = 1.0;      slotY = v; slotZ = u; }
-                default    -> { slotX = 0.5;      slotY = v; slotZ = 0.5; }
+                case NORTH -> { slotX = u;        slotY = v; slotZ = 0.0;}
+                case SOUTH -> { slotX = 1.0 - u;  slotY = v; slotZ = 1.0;}
+                case WEST  -> { slotX = 0.0;      slotY = v; slotZ = 1.0 - u;}
+                case EAST  -> { slotX = 1.0;      slotY = v; slotZ = u;}
+                default    -> { slotX = 0.5;      slotY = v; slotZ = 0.5;}
             }
 
             double dist = localHit.distanceTo(new Vec3(slotX, slotY, slotZ));

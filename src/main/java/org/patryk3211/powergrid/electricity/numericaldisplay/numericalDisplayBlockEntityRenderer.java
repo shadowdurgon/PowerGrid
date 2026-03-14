@@ -10,26 +10,15 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
-import org.patryk3211.powergrid.PowerGrid;
 
 public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer<numericalDisplayBlockEntity> {
-
-    //private static final ModelResourceLocation Model = new ModelResourceLocation(PowerGrid.asResource("block/contactor"), "");
-
     public numericalDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
-
-
-    private static final ResourceLocation BLANK_PLATE_TEXTURE = //textures
-            PowerGrid.asResource("block/numerical_display/onetozero");
-
-
-    //private static final float SHEET_WIDTH = 80f; // 11*4 + 10*1
     private static final float SHEET_HEIGHT = 16f;
 
     private static final float FRAME_WIDTH = 5f;
     private static final float FRAME_HEIGHT = 7f;
-    private static final float FRAME_PADDING = 1f; // padding BETWEEN frames only
+    private static final float FRAME_PADDING = 1f;
 
     private static final int GRID_COLS = 4;
     private static final int GRID_ROWS = 4;
@@ -77,46 +66,31 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
                 float cellX = col * CELL_SIZE;
                 float cellY = (GRID_ROWS - 1 - row) * CELL_SIZE;
 
-                switch (slot.getModule() != null ? slot.getModule().getType().ordinal() : 0){
-                    case 1,2,3:
-                        float innerX = cellX + INNER_OFFSET;
-                        float innerY = cellY + INNER_UD_OFFSET;
+                float innerX = cellX + INNER_OFFSET;
+                float innerY = cellY + INNER_UD_OFFSET;
 
-                        float frameIndex = slot.getIndex();
-                        if (halfClick){
-                            frameIndex -= .5f;
-                        }
-                        var SHEET_WIDTH = slot.getModule().getDisplayTextureSize();
-
-                        float uMin = (frameIndex * (FRAME_WIDTH + FRAME_PADDING)) / SHEET_WIDTH;
-                        float uMax = (frameIndex * (FRAME_WIDTH + FRAME_PADDING) + FRAME_WIDTH) / SHEET_WIDTH;
-                        float vMin = 0f;
-                        float vMax = FRAME_HEIGHT / SHEET_HEIGHT;
-
-                        renderQuad(matrix, buffer,
-                                slot.getModule().getDisplayTexture(),
-                                innerX, innerY,
-                                INNER_RL_SIZE, INNER_UD_SIZE,
-                                uMin, vMin, uMax, vMax,
-                                light, overlay);
-                        break;
-
-                    case 4: renderQuad(matrix, buffer,
-                            BLANK_PLATE_TEXTURE,
-                            cellX, cellY,
-                            CELL_SIZE, CELL_SIZE,
-                            0f, 0f, 1f, 1f,
-                            light, overlay);
-                        break;
-
-                    default:throw new IllegalStateException("Cannot find module switch statement");
+                float frameIndex = slot.getIndex();
+                if (halfClick){
+                    frameIndex -= .5f;
                 }
+                var SHEET_WIDTH = slot.getModule().getDisplayTextureSize();
+
+                float uMin = (frameIndex * (FRAME_WIDTH + FRAME_PADDING)) / SHEET_WIDTH;
+                float uMax = (frameIndex * (FRAME_WIDTH + FRAME_PADDING) + FRAME_WIDTH) / SHEET_WIDTH;
+                float vMin = 0f;
+                float vMax = FRAME_HEIGHT / SHEET_HEIGHT;
+
+                renderQuad(matrix, buffer,
+                        slot.getModule().getDisplayTexture(),
+                        innerX, innerY,
+                        INNER_RL_SIZE, INNER_UD_SIZE,
+                        uMin, vMin, uMax, vMax,
+                        light, overlay);
+
             }
         }
-
         pStack.popPose();
     }
-
 
     private void renderQuad(Matrix4f matrix, MultiBufferSource bufferSource, ResourceLocation texture,
                             float x, float y, float width, float height, float uMin, float vMin, float uMax, float vMax,
@@ -124,15 +98,15 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
 
         VertexConsumer vc = bufferSource.getBuffer(RenderType.text(texture));
 
-        vc.addVertex(matrix, x + width, y,          0f).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x + width, y, 0f).setColor(255, 255, 255, 255)
                 .setUv(uMin, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x,         y,          0f).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x, y, 0f).setColor(255, 255, 255, 255)
                 .setUv(uMax, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x,         y + height, 0f).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x, y + height, 0f).setColor(255, 255, 255, 255)
                 .setUv(uMax, vMin).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 

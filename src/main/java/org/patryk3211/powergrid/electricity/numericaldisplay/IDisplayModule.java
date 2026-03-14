@@ -20,6 +20,7 @@ public interface IDisplayModule {
     default boolean getHalfClick() {return false;}
 
     default int getIndex() {return -1;}
+
     IDisplayModule withIndex(int newIndex);
 
     IDisplayModule withHalfClick(boolean halfClick);
@@ -31,7 +32,7 @@ public interface IDisplayModule {
     default int getDisplayTextureCharacterCount() {return 0;}
 
     default ResourceLocation getModuleModel() {return null;}
+
     String serialize();
-    //ItemStack toItemStack();
 
 }

@@ -16,8 +16,6 @@ public class slotData {
     }
 
     public boolean isEmpty()    { return module == null; }
-    public boolean isBlanking() { return module != null && module.getType() == IDisplayModule.ModuleType.BLANKING; }
-    //public boolean isDigit()    { return module != null && module.getType() == IDisplayModule.ModuleType.DIGIT; }
 
     public boolean isHalfClick() { return module.getHalfClick();}
 

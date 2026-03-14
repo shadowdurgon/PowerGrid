@@ -25,14 +25,12 @@ import org.patryk3211.powergrid.circuits.schematic.PlacedComponent;
 import org.patryk3211.powergrid.circuits.thermal.ThermalBuilder;
 import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
-
 import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 import org.patryk3211.powergrid.network.packets.UpdateComponentBiPacket;
 import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
 
 public class NumericalDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
-    private SwitchedWire[] wires;
     public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_threshold", 13, 1, 30);
     public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "numerical_display_index", 1, 0, 30).hidden().cast();
     public static final IntProperty CURRENT_MODULE = new IntProperty(PowerGrid.MOD_ID, "numerical_display_module", 0, 0, 10).hidden().cast();
@@ -44,11 +42,6 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
 
     private ValueSettingsBoard board = null;
 
-
-    public NumericalDisplayComponent(ComponentFootprint footprint, ResourceLocation texture, Float characterCount, Float spriteWidth) {
-        super(footprint);
-    }
-
     public NumericalDisplayComponent(ComponentFootprint footprint) {
         super(footprint);
     }
@@ -57,21 +50,16 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
     private static final float FRAME_WIDTH = 5f;
     private static final float FRAME_HEIGHT = 7f;
     private static final float FRAME_PADDING = 1f;
-    private static final int GRID_COLS = 4;
-    private static final int GRID_ROWS = 4;
     private static final float PIXEL = 1f / 16f;
-    private static final float CELL_SIZE = 4f * PIXEL;
     private static final float INNER_OFFSET = 1f * PIXEL;
     private static final float INNER_UD_OFFSET = .75f * PIXEL;
     private static final float INNER_UD_SIZE = 2.5f * PIXEL;
     private static final float INNER_RL_SIZE = 2f * PIXEL;
-    private static final float INNER_SIZE = 2f * PIXEL;
     private static final float Y_NUDGE = 0.0001f;
 
     private void setCurrentModule(PlacedComponent component){
         var Module = component.get(CURRENT_MODULE);
         component.set(INDEX, 0);
-
 
         switch (Module){
             case 0:
@@ -144,6 +132,7 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
             posToReset.setState(false);
             placed.set(WIRE_RESET, false);
         }
+
         if(posToNegitive.isConverged()) {
 
             if (posToNegitiveCurrent >= .5 && placed.get(INDEX) != charCount+1 && !placed.get(HALF_CLICK)) {
@@ -187,7 +176,6 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
                 placed.notifyClients(INDEX);
             }
         }
-
         return true;
     }
 
@@ -212,7 +200,6 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
                 .addHeatSource(neutralToReset);
 
     }
-
 
     @Override
     public void render(CircuitBoardBlockEntity be, PlacedComponent placed, float partialTicks, PoseStack pStack, MultiBufferSource buffer, int light, int overlay) {

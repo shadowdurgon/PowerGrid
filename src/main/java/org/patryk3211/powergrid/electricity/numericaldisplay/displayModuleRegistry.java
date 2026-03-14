@@ -18,8 +18,6 @@ public class displayModuleRegistry {
             return new oneToZeroNumberModule(digit, halfClick);
         });
 
-        register("blanking", value -> new blankingModule());
-
         register("zerotonine", value -> {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);
@@ -48,7 +46,7 @@ public class displayModuleRegistry {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
-            return new nineToZeroNumberModule(digit, halfClick);
+            return new alphabetLetterModule(digit, halfClick);
         });
 
     }
