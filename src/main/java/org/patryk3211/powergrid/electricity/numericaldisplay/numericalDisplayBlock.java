@@ -1,12 +1,13 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay;
 
 import com.simibubi.create.foundation.block.IBE;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
@@ -19,9 +20,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.patryk3211.powergrid.collections.ModIcons;
 import org.patryk3211.powergrid.collections.ModdedBlockEntities;
-import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.electricity.base.HorizontalElectricBlock;
 import org.patryk3211.powergrid.electricity.base.IDecoratedTerminal;
 import org.patryk3211.powergrid.electricity.base.TerminalBoundingBox;
@@ -61,7 +60,7 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 
         Direction facing = state.getValue(numericalDisplayBlock.HORIZONTAL_FACING);
 
@@ -89,7 +88,16 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
 
         if (level.isClientSide) return InteractionResult.SUCCESS;
 
+
         BlockEntity be = level.getBlockEntity(pos);
+
+        if (player.getMainHandItem().getItem() instanceof DyeItem dye) {
+            if (be instanceof numericalDisplayBlockEntity display) {
+                display.setColor(slotIndex, dye.getDyeColor());
+                if (!player.isCreative()) player.getMainHandItem().shrink(1);
+                return InteractionResult.CONSUME;
+            }
+        }
 
         if (be instanceof numericalDisplayBlockEntity display) {
             display.interact(slotIndex, player);

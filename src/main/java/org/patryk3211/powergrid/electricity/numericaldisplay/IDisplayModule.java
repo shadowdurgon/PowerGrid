@@ -1,6 +1,7 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 
 public interface IDisplayModule {
@@ -10,7 +11,6 @@ public interface IDisplayModule {
         DIGIT,                      // pure numbers
         LETTER,                     // pure letters
         ALPHANUMERIC,               // number letter mix
-        BLANKING                    // blanking plate
     }
 
     ModuleType getType();
@@ -21,9 +21,13 @@ public interface IDisplayModule {
 
     default int getIndex() {return -1;}
 
+    default DyeColor getColor() {return DyeColor.WHITE;}
+
     IDisplayModule withIndex(int newIndex);
 
     IDisplayModule withHalfClick(boolean halfClick);
+
+    IDisplayModule withColor(DyeColor color);
 
     default ResourceLocation getDisplayTexture() {return null;}
 

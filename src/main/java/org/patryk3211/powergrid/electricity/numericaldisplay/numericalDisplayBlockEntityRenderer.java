@@ -80,12 +80,14 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
                 float vMin = 0f;
                 float vMax = FRAME_HEIGHT / SHEET_HEIGHT;
 
+                int rgb = slot.getModule().getColor().getTextureDiffuseColor();
+
                 renderQuad(matrix, buffer,
                         slot.getModule().getDisplayTexture(),
                         innerX, innerY,
                         INNER_RL_SIZE, INNER_UD_SIZE,
                         uMin, vMin, uMax, vMax,
-                        light, overlay);
+                        light, overlay, rgb);
 
             }
         }
@@ -94,23 +96,27 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
 
     private void renderQuad(Matrix4f matrix, MultiBufferSource bufferSource, ResourceLocation texture,
                             float x, float y, float width, float height, float uMin, float vMin, float uMax, float vMax,
-                            int packedLight, int packedOverlay) {
+                            int packedLight, int packedOverlay, int rgb) {
 
         VertexConsumer vc = bufferSource.getBuffer(RenderType.text(texture));
 
-        vc.addVertex(matrix, x + width, y, 0f).setColor(255, 255, 255, 255)
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8)  & 0xFF;
+        int b =  rgb        & 0xFF;
+
+        vc.addVertex(matrix, x + width, y, 0f).setColor(r, g, b, 255)
                 .setUv(uMin, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x, y, 0f).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x, y, 0f).setColor(r, g, b, 255)
                 .setUv(uMax, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x, y + height, 0f).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x, y + height, 0f).setColor(r, g, b, 255)
                 .setUv(uMax, vMin).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x + width, y + height, 0f).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x + width, y + height, 0f).setColor(r, g, b, 255)
                 .setUv(uMin, vMin).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
     }

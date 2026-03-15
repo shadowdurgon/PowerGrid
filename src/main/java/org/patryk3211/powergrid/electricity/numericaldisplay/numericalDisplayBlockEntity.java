@@ -10,6 +10,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,15 +18,15 @@ import org.jetbrains.annotations.Nullable;
 import org.patryk3211.powergrid.collections.ModdedItems;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
 import org.patryk3211.powergrid.electricity.base.ElectricBlockEntity;
-import org.patryk3211.powergrid.electricity.base.IElectricEntity;
 import org.patryk3211.powergrid.electricity.base.ThermalBehaviour;
 import org.patryk3211.powergrid.electricity.numericaldisplay.modules.*;
+import org.patryk3211.powergrid.electricity.sim.AbstractElectricWire;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 
 import java.util.List;
 
-public class numericalDisplayBlockEntity extends ElectricBlockEntity implements IElectricEntity {
-    private SwitchedWire[] wires;
+public class numericalDisplayBlockEntity extends ElectricBlockEntity {
+    private AbstractElectricWire[] wires;
     public static final int SLOT_COUNT = 16;
     private ScrollOptionBehaviour<DisplayModuleType> moduleTypeBehaviour;
     public int lastHitSlot = 0;
@@ -49,13 +50,14 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
     private void onSlotTypeChanged(int slot, int value) {
         DisplayModuleType type = DisplayModuleType.values()[value];
+        var lastColor = modules[slot].getColor();
         switch (type) {
-            case ZERO_TO_NINE -> modules[slot] = new zeroToNineNumberModule(0, false);
-            case NINE_TO_ZERO -> modules[slot] = new nineToZeroNumberModule(0, false);
-            case ONE_TO_ZERO -> modules[slot] = new oneToZeroNumberModule(0, false);
-            case HEXADECIMAL -> modules[slot] = new hexadecimalAlphanumericModule(0, false);
-            case SYMBOLS -> modules[slot] = new symbolLetterModule(0, false);
-            case ALPHABET -> modules[slot] = new alphabetLetterModule(0, false);
+            case ZERO_TO_NINE -> modules[slot] = new zeroToNineNumberModule(0, false, lastColor);
+            case NINE_TO_ZERO -> modules[slot] = new nineToZeroNumberModule(0, false, lastColor);
+            case ONE_TO_ZERO -> modules[slot] = new oneToZeroNumberModule(0, false, lastColor);
+            case HEXADECIMAL -> modules[slot] = new hexadecimalAlphanumericModule(0, false, lastColor);
+            case SYMBOLS -> modules[slot] = new symbolLetterModule(0, false, lastColor);
+            case ALPHABET -> modules[slot] = new alphabetLetterModule(0, false, lastColor);
         }
         markUpdated();
     }
@@ -65,13 +67,10 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
         moduleTypeBehaviour.value = modules[slot].getDisplayModuleType().ordinal();
     }
 
-
-
     public slotData getSlot(int index) {
         if (index < 0 || index >= SLOT_COUNT) return slotData.empty();
         return new slotData(modules[index]);
     }
-
 
     public boolean interact(int slotIndex, Player player){
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return false;
@@ -89,7 +88,8 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
             return true;
         }
 
-        if (heldModule == null) return false;
+        if (heldModule == null)
+            return false;
 
         if (current != null) {
             if (!player.getInventory().add(new ItemStack(ModdedItems.DISPLAY_MODULE.get()))) {
@@ -99,21 +99,25 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
         modules[slotIndex] = heldModule;
         if (!player.isCreative()) held.shrink(1);
-        wires[slotIndex * 3].setState(true);
-        wires[slotIndex * 3+1].setState(true);
-        wires[slotIndex * 3+2].setState(false);
+        var negative = (SwitchedWire) wires[slotIndex * 3+1];
+        var reset = (SwitchedWire) wires[slotIndex * 3+2];
+        reset.setState(false);
+        negative.setState(true);
 
         markUpdated();
         return true;
     }
 
-
+    public void setColor(int slotIndex, DyeColor color) {
+        modules[slotIndex] = modules[slotIndex].withColor(color);
+        markUpdated();
+    }
 
     @Nullable
     private IDisplayModule resolveModule(ItemStack stack) {
         if (stack.isEmpty()) return null;
         if (stack.is(ModdedItems.DISPLAY_MODULE.get())) {
-            return new zeroToNineNumberModule(0, false); // type set via ScrollOptionBehaviour
+            return new zeroToNineNumberModule(0, false, DyeColor.WHITE);
         }
         return null;
     }
@@ -130,20 +134,6 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         return saveWithoutMetadata(registries);
     }
-
-//    @Nullable
-//    @Override
-//    public ClientboundBlockEntityDataPacket getUpdatePacket() {
-//        return ClientboundBlockEntityDataPacket.create(this);
-//    }
-//
-//    @Override
-//    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider registries) {
-//        CompoundTag tag = pkt.getTag();
-//        if (tag != null) {
-//            read(tag, registries,false);
-//        }
-//    }
 
     @Override
     public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
@@ -197,46 +187,47 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
     @Override
     public void electricalTick() {
-        for (SwitchedWire wire : wires) applyPower(wire);
+        for (AbstractElectricWire wire : wires) applyPower(wire);
         int w1 = 0, w2 = 1, w3 = 2;
         for (int i = 0; i < SLOT_COUNT; i++) {
-            var resetToGround = wires[w1];
-            var posToNegitive = wires[w2];
-            var posToReset = wires[w3];
+            var coil = wires[w1];
+            var coilNodeToNegative = (SwitchedWire) wires[w2];
+            var coilNodeToReset = (SwitchedWire) wires[w3];
+            var coilNodeToNegativeCurrent = Math.abs(coilNodeToNegative.current());
+            var coilNodeToResetCurrent = Math.abs(coilNodeToReset.current());
             var slot = getSlot(i);
             if (!slot.isEmpty()) {
                 var charCount = slot.getModule().getDisplayTextureCharacterCount();
                 //every module display texture has the characters in the sprite plus a blank space and the first character again for smooth transition
                 //but im only counting characters before the blank space and adding one for the blank space and two for the transition
-                if (posToNegitive.current() >= .5 && slot.getIndex() != charCount+1 && !slot.getModule().getHalfClick()) {
+                var temp = coilNodeToNegative.current();
+                if (coilNodeToNegativeCurrent >= .5 && slot.getIndex() != charCount+1 && !slot.getModule().getHalfClick()) {
                     add1ToIndex(i);
                     setHalfClick(i, true);
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
                     markUpdated();
                 }
 
-                if (posToNegitive.current() < .5 && slot.getIndex() == charCount+1 && posToNegitive.getState()){
+                if (coilNodeToNegativeCurrent < .5 && slot.getIndex() == charCount+1 && coilNodeToNegative.getState()){
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
-                    posToNegitive.setState(false);
-                    posToReset.setState(true);
-                    resetToGround.setState(false);
+                    coilNodeToNegative.setState(false);
+                    coilNodeToReset.setState(true);
                     setHalfClick(i, false);
                     markUpdated();
                 }
 
-                if (posToNegitive.current() < .5 && posToNegitive.getState() && slot.getModule().getHalfClick()) {//CHANGED
+                if (coilNodeToNegativeCurrent < .5 && coilNodeToNegative.getState() && slot.getModule().getHalfClick()) {
                     setHalfClick(i, false);
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
                     markUpdated();
                 }
 
-                if (posToReset.getState() && posToReset.current() >= .5 && slot.getIndex() == charCount+1) {
+                if (coilNodeToReset.getState() && coilNodeToResetCurrent >= .5 && slot.getIndex() == charCount+1) {
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
                     add1ToIndex(i);
                     setHalfClick(i, true);
-                    posToNegitive.setState(true);
-                    posToReset.setState(false);
-                    resetToGround.setState(true);
+                    coilNodeToNegative.setState(true);
+                    coilNodeToReset.setState(false);
                     markUpdated();
                 }
 
@@ -261,7 +252,7 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
     @Override
     public void buildCircuit(CircuitBuilder builder) {
         builder.setTerminalCount(2*SLOT_COUNT + 1);
-        wires = new SwitchedWire[3*SLOT_COUNT];
+        wires = new AbstractElectricWire[3*SLOT_COUNT];
         var negative = builder.terminalNode(0);
 
         int p = 1, r = 2, w1 = 0, w2 = 1, w3 = 2;
@@ -269,9 +260,11 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity implements 
 
             var positive = builder.terminalNode(p);
             var reset = builder.terminalNode(r);
-            wires[w1] = builder.connectSwitch(1, reset, negative, true);
-            wires[w2] = builder.connectSwitch(25, positive, negative, true);
-            wires[w3] = builder.connectSwitch(25, positive, reset, false);
+            var coilNode = builder.addInternalNode();
+
+            wires[w1] = builder.connect(25, builder.terminalNode(p), coilNode);
+            wires[w2] = builder.connectSwitch(0.1f, negative, coilNode, true);
+            wires[w3] = builder.connectSwitch(0.1f, builder.terminalNode(r), coilNode, false);
             p +=2; r +=2; w1+=3; w2+=3; w3+=3;
         }
     }

@@ -11,7 +11,7 @@ public enum DisplayModuleType implements INamedIconOptions {
     SYMBOLS("Symbols", AllIcons.I_NONE),
     ALPHABET("Alphabet", AllIcons.I_NONE);
 
-    // add future types here
+
 
     private final String name;
     private final AllIcons icon;

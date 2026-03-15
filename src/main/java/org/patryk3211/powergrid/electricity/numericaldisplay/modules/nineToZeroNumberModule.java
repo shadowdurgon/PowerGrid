@@ -1,6 +1,7 @@
 package org.patryk3211.powergrid.electricity.numericaldisplay.modules;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
 import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
@@ -8,23 +9,29 @@ import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
 public class nineToZeroNumberModule implements IDisplayModule {
     private final int Index;
     private final boolean halfClick;
+    private final DyeColor color;
     //counts 9,8,7,6,5,4,3,2,1,0,blank,9 (first number repeated for smooth transition)
-
-    public nineToZeroNumberModule(int Index, boolean halfClick) {
+    public nineToZeroNumberModule(int Index, boolean halfClick, DyeColor color) {
         if (Index < 0 || Index > getDisplayTextureCharacterCount() + 2)
             throw new IllegalArgumentException("Index must be 0-"+getDisplayTextureCharacterCount() + 2 + ", got: " + Index);
         this.Index = Index;
         this.halfClick = halfClick;
+        this.color = color;
     }
 
     @Override
     public IDisplayModule withIndex(int newIndex) {
-        return new nineToZeroNumberModule(newIndex, this.halfClick);
+        return new nineToZeroNumberModule(newIndex, this.halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withHalfClick(boolean halfClick) {
-        return new nineToZeroNumberModule(this.Index, halfClick);
+        return new nineToZeroNumberModule(this.Index, halfClick, this.color);
+    }
+
+    @Override
+    public IDisplayModule withColor(DyeColor color) {
+        return new nineToZeroNumberModule(this.Index, this.halfClick, color);
     }
 
     @Override
@@ -59,8 +66,14 @@ public class nineToZeroNumberModule implements IDisplayModule {
     }
 
     @Override
+    public DyeColor getColor() {
+        return color;
+    }
+
+
+    @Override
     public String serialize() {
-        return "ninetozero:" + Index + ":" + halfClick;
+        return "ninetozero:" + Index + ":" + halfClick + ":" + color;
     }
 
 }

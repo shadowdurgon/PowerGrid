@@ -5,8 +5,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.AngleHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -23,7 +26,7 @@ public class SingleSlotTransform extends ValueBoxTransform {
         double y = ((3 - row) * 4 + 2) / 16.0;
         double z = 1.0;
 
-        return rotateHorizontally(state, new Vec3(x, y, z));
+        return rotateHorizontally(state, new Vec3(x, y, z-0.015));
     }
     private final numericalDisplayBlockEntity blockEntity;
 
@@ -63,6 +66,10 @@ public class SingleSlotTransform extends ValueBoxTransform {
 
         blockEntity.lastHitSlot = bestSlot;
         blockEntity.syncBehaviourToSlot(bestSlot);
+
+        Minecraft mc = Minecraft.getInstance();
+        ItemStack held = mc.player.getMainHandItem();
+        if (held.getItem() instanceof DyeItem) return false;
 
         if (blockEntity.modules[bestSlot] == null) return false;
 

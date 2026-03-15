@@ -13,6 +13,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
@@ -33,12 +35,14 @@ import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
 public class NumericalDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
     public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_threshold", 13, 1, 30);
     public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "numerical_display_index", 1, 0, 30).hidden().cast();
+    public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_half_click").hidden().cast();
     public static final IntProperty CURRENT_MODULE = new IntProperty(PowerGrid.MOD_ID, "numerical_display_module", 0, 0, 10).hidden().cast();
     public static final StringProperty DISPLAYED_TEXTURE = new StringProperty(PowerGrid.MOD_ID, "numerical_display_texture", "zerotonine").hidden().cast();
-    public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_half_click").hidden().cast();
     public static final FloatProperty SPRITE_WIDTH = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_sprite_width", 80, 16, 300).hidden().cast();
     public static final FloatProperty CHARACTER_COUNT = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_character_count", 9, 0, 50).hidden().cast();
     public static final BooleanProperty WIRE_RESET = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_reset").hidden().cast();
+    public static final StringProperty CURRENT_COLOR = new StringProperty(PowerGrid.MOD_ID, "numerical_display_current_color","WHITE").hidden().cast();
+
 
     private ValueSettingsBoard board = null;
 
@@ -109,7 +113,8 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
     @Override
     protected void addProperties(ImmutableCollection.Builder<ComponentProperty<?>> properties) {
         super.addProperties(properties);
-        properties.add(THRESHOLD_VOLTAGE, INDEX, HALF_CLICK, CURRENT_MODULE, DISPLAYED_TEXTURE, SPRITE_WIDTH, CHARACTER_COUNT, WIRE_RESET, power(25));
+        properties.add(THRESHOLD_VOLTAGE, INDEX, HALF_CLICK, CURRENT_MODULE, DISPLAYED_TEXTURE, SPRITE_WIDTH,
+                CHARACTER_COUNT, WIRE_RESET, CURRENT_COLOR, power(25));
     }
 
     @Override
@@ -117,25 +122,24 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         if (placed.isClient()) return true;
         if(placed.wires.isEmpty())
             return true;
-        var resetToGround = (SwitchedWire) placed.wires.get(0);
-        var posToNegitive = (SwitchedWire) placed.wires.get(1);
-        var posToReset = (SwitchedWire) placed.wires.get(2);
-        var posToNegitiveCurrent = Math.abs(posToNegitive.current());
-        var posToResetCurrent = Math.abs(posToReset.current());
+        var coilNodeToReset = (SwitchedWire) placed.wires.get(0);
+        var coilNodeToNegative =  (SwitchedWire) placed.wires.get(2);
+
+        var coilNodeToNegativeCurrent = Math.abs(coilNodeToNegative.current());
+        var coilNodeToResetCurrent = Math.abs(coilNodeToReset.current());
         var charCount = placed.get(CHARACTER_COUNT);
         //every module display texture has the characters in the sprite plus a blank space and the first character again for smooth transition
         //but im only counting characters before the blank space and adding one for the blank space and two for the transition
 
         if (placed.get(WIRE_RESET) == true){
-            resetToGround.setState(true);
-            posToNegitive.setState(true);
-            posToReset.setState(false);
+            coilNodeToReset.setState(false);
+            coilNodeToNegative.setState(true);
             placed.set(WIRE_RESET, false);
         }
 
-        if(posToNegitive.isConverged()) {
+        if (coilNodeToNegative.isConverged()){
 
-            if (posToNegitiveCurrent >= .5 && placed.get(INDEX) != charCount+1 && !placed.get(HALF_CLICK)) {
+            if (coilNodeToNegativeCurrent >= .5 && placed.get(INDEX) != charCount+1 && !placed.get(HALF_CLICK)) {
                 placed.set(INDEX, placed.get(INDEX) +1);
                 placed.set(HALF_CLICK, true);
                 placed.onServerWorld(() -> world -> ModdedSoundEvents.RELAY_CLICK.playOnServer(world, placed.getPos(), 0.75f, 2f));
@@ -143,30 +147,28 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
                 placed.notifyClients(HALF_CLICK);
             }
 
-            if (posToNegitiveCurrent < .5 && placed.get(INDEX) == charCount+1 && posToNegitive.getState()){
+            if (coilNodeToNegativeCurrent < .5 && placed.get(INDEX) == charCount+1 && coilNodeToNegative.getState()){
                 placed.onServerWorld(() -> world -> ModdedSoundEvents.RELAY_CLICK.playOnServer(world, placed.getPos(), 0.75f, 1.9f));
-                posToNegitive.setState(false);
-                posToReset.setState(true);
-                resetToGround.setState(false);
+                coilNodeToNegative.setState(false);
+                coilNodeToReset.setState(true);
                 placed.set(HALF_CLICK, false);
                 placed.notifyClients(INDEX);
                 placed.notifyClients(HALF_CLICK);
             }
 
-            if (posToNegitiveCurrent < .5 && posToNegitive.getState() && placed.get(HALF_CLICK)) {//CHANGED
+            if (coilNodeToNegativeCurrent < .5 && coilNodeToNegative.getState() && placed.get(HALF_CLICK)) {
                 placed.set(HALF_CLICK, false);
                 placed.onServerWorld(() -> world -> ModdedSoundEvents.RELAY_CLICK.playOnServer(world, placed.getPos(), 0.75f, 1.9f));
                 placed.notifyClients(INDEX);
                 placed.notifyClients(HALF_CLICK);
             }
 
-            if (posToReset.getState() && posToResetCurrent >= .5 && placed.get(INDEX) == charCount+1) {
+            if (coilNodeToReset.getState() && coilNodeToResetCurrent >= .5 && placed.get(INDEX) == charCount+1) {
                 placed.onServerWorld(() -> world -> ModdedSoundEvents.RELAY_CLICK.playOnServer(world, placed.getPos(), 0.75f, 2f));
                 placed.set(INDEX, placed.get(INDEX) +1);
                 placed.set(HALF_CLICK, true);
-                posToNegitive.setState(true);
-                posToReset.setState(false);
-                resetToGround.setState(true);
+                coilNodeToNegative.setState(true);
+                coilNodeToReset.setState(false);
                 placed.notifyClients(INDEX);
                 placed.notifyClients(HALF_CLICK);
             }
@@ -181,23 +183,21 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
 
     @Override
     public void bake(@NotNull PlacedComponent placed, @NotNull ComponentCircuitBuilder builder, ThermalBuilder.@NotNull IEmitter thermals) {
-        var neutralToReset = builder.connectSwitch(1, builder.terminalNode(2), builder.terminalNode(1), true);
-        var coil = builder.connectSwitch(25, builder.terminalNode(0), builder.terminalNode(1), true);
-        var positiveToReset = builder.connectSwitch(25, builder.terminalNode(0), builder.terminalNode(2), false);
-        placed.add(neutralToReset); placed.add(coil); placed.add(positiveToReset);
+
+        var coilNode = builder.addInternalNode();
+        var coil = builder.connect(25, builder.terminalNode(0), coilNode);
+        var coilNodeToNegitive = builder.connectSwitch(0.1f, builder.terminalNode(1), coilNode, true);
+        var coilNodeToReset = builder.connectSwitch(0.1f, builder.terminalNode(2), coilNode, false);
+        placed.add(coilNodeToReset); placed.add(coil); placed.add(coilNodeToNegitive);
 
         thermals.builder()
                 .setThermalMass(0.15f)
                 .setMaxPower(25, 125f)
-                .addHeatSource(positiveToReset);
+                .addHeatSource(coilNodeToReset);
         thermals.builder()
                 .setThermalMass(0.15f)
                 .setMaxPower(25, 125f)
-                .addHeatSource(coil);
-        thermals.builder()
-                .setThermalMass(0.15f)
-                .setMaxPower(100, 125f)
-                .addHeatSource(neutralToReset);
+                .addHeatSource(coilNodeToNegitive);
 
     }
 
@@ -230,35 +230,41 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         float vMin = 0f;
         float vMax = FRAME_HEIGHT / SHEET_HEIGHT;
 
+        int rgb = DyeColor.byName(placed.get(CURRENT_COLOR), DyeColor.WHITE).getTextureDiffuseColor();
+
         renderQuad(matrix, buffer,
                 PowerGrid.texture(temp),
                 innerX, innerY,
                 INNER_RL_SIZE, INNER_UD_SIZE,
                 uMin, vMin, uMax, vMax,
-                light, overlay);
+                light, overlay, rgb);
 
         pStack.popPose();
     }
 
     private void renderQuad(Matrix4f matrix, MultiBufferSource bufferSource, ResourceLocation texture,
                             float x, float z, float width, float height, float uMin, float vMin, float uMax, float vMax,
-                            int packedLight, int packedOverlay) {
+                            int packedLight, int packedOverlay, int rgb) {
 
         VertexConsumer vc = bufferSource.getBuffer(RenderType.text(texture));
 
-        vc.addVertex(matrix, x + width, 0f, z).setColor(255, 255, 255, 255)
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8)  & 0xFF;
+        int b =  rgb        & 0xFF;
+
+        vc.addVertex(matrix, x + width, 0f, z).setColor(r, g, b, 255)
                 .setUv(uMax, vMin).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x, 0f, z).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x, 0f, z).setColor(r, g, b, 255)
                 .setUv(uMin, vMin).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x, 0f, z + height).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x, 0f, z + height).setColor(r, g, b, 255)
                 .setUv(uMin, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
 
-        vc.addVertex(matrix, x + width, 0f, z + height).setColor(255, 255, 255, 255)
+        vc.addVertex(matrix, x + width, 0f, z + height).setColor(r, g, b, 255)
                 .setUv(uMax, vMax).setOverlay(packedOverlay).setLight(packedLight)
                 .setNormal(0f, 0f, 1f);
     }
@@ -270,6 +276,14 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
 
     @Override
     public InteractionResult use(CircuitBoardBlockEntity be, PlacedComponent component, Player player) {
+
+        if (player.getMainHandItem().getItem() instanceof DyeItem dye && !be.getLevel().isClientSide()){
+            component.set(CURRENT_COLOR, dye.getDyeColor().getName());
+            component.notifyClients(CURRENT_COLOR);
+            if (!player.isCreative()) player.getMainHandItem().shrink(1);
+            return InteractionResult.SUCCESS;
+        }
+
         component.onClientWorld(() -> world -> {
             if (board == null) {
                 board = new ValueSettingsBoard(

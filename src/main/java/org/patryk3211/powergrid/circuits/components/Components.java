@@ -233,8 +233,8 @@ public class Components {
 
     public static final RegistryEntry<Component, NumericalDisplayComponent> DISPLAY_MODULE = REGISTRATE.component("display_module", NumericalDisplayComponent::new)
             .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "relay.coil", null)
-                    .addPad(3, 2, 1, "relay.coil", null)
+                    .addPad(0, 1, 0, "numerical.positive", "P")
+                    .addPad(3, 2, 1, "numerical.negitive", "N")
                     .addPad(2, 0, 2, "numerical.reset", "R")
                     .withItem().withOutline()
             )
