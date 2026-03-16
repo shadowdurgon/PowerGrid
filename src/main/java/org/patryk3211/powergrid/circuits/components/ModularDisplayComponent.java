@@ -31,17 +31,18 @@ import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 import org.patryk3211.powergrid.network.packets.UpdateComponentBiPacket;
 import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
+import org.patryk3211.powergrid.utility.Lang;
 
 public class ModularDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
-    public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_threshold", 13, 1, 30);
-    public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "numerical_display_index", 1, 0, 30).hidden().cast();
-    public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_half_click").hidden().cast();
-    public static final IntProperty CURRENT_MODULE = new IntProperty(PowerGrid.MOD_ID, "numerical_display_module", 0, 0, 10).hidden().cast();
-    public static final StringProperty DISPLAYED_TEXTURE = new StringProperty(PowerGrid.MOD_ID, "numerical_display_texture", "zerotonine").hidden().cast();
-    public static final FloatProperty SPRITE_WIDTH = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_sprite_width", 80, 16, 300).hidden().cast();
-    public static final FloatProperty CHARACTER_COUNT = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_character_count", 9, 0, 50).hidden().cast();
-    public static final BooleanProperty WIRE_RESET = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_reset").hidden().cast();
-    public static final StringProperty CURRENT_COLOR = new StringProperty(PowerGrid.MOD_ID, "numerical_display_current_color","WHITE").hidden().cast();
+    public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "modular_display_threshold", 13, 1, 30);
+    public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "modular_display_index", 1, 0, 30).hidden().cast();
+    public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "modular_display_half_click").hidden().cast();
+    public static final IntProperty CURRENT_MODULE = new IntProperty(PowerGrid.MOD_ID, "modular_display_module", 0, 0, 10).hidden().cast();
+    public static final StringProperty DISPLAYED_TEXTURE = new StringProperty(PowerGrid.MOD_ID, "modular_display_texture", "zerotonine").hidden().cast();
+    public static final FloatProperty SPRITE_WIDTH = new FloatProperty(PowerGrid.MOD_ID, "modular_display_sprite_width", 80, 16, 300).hidden().cast();
+    public static final FloatProperty CHARACTER_COUNT = new FloatProperty(PowerGrid.MOD_ID, "modular_display_character_count", 9, 0, 50).hidden().cast();
+    public static final BooleanProperty WIRE_RESET = new BooleanProperty(PowerGrid.MOD_ID, "modular_display_reset").hidden().cast();
+    public static final StringProperty CURRENT_COLOR = new StringProperty(PowerGrid.MOD_ID, "modular_display_current_color","WHITE").hidden().cast();
 
 
     private ValueSettingsBoard board = null;
@@ -202,7 +203,8 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
     }
 
     @Override
-    public void render(CircuitBoardBlockEntity be, PlacedComponent placed, float partialTicks, PoseStack pStack, MultiBufferSource buffer, int light, int overlay) {
+    public void render(CircuitBoardBlockEntity be, PlacedComponent placed, float partialTicks, PoseStack pStack,
+                       MultiBufferSource buffer, int light, int overlay) {
 
         pStack.pushPose();
         pStack.translate(0.5, 8f/16f, 0.5);
@@ -287,7 +289,7 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
         component.onClientWorld(() -> world -> {
             if (board == null) {
                 board = new ValueSettingsBoard(
-                        Component.literal("Module Type"),
+                        Lang.translateDirect("devices.display_module.module_type"),
                         DisplayModuleType.values().length - 1,
                         1,
                         ImmutableList.of(Component.literal("Index")),

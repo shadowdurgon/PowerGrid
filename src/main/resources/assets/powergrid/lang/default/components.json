@@ -63,5 +63,9 @@
   "powergrid.component.property.barretter_resistance": "Minimum Resistance",
 
   "powergrid.component.property.varistor_voltage": "Threshold Voltage",
-  "powergrid.component.property.varistor_voltage.summary": "Voltage around which the varistor starts to conduct major current"
+  "powergrid.component.property.varistor_voltage.summary": "Voltage around which the varistor starts to conduct major current",
+
+  "powergrid.component.property.modular_display_threshold": "Threshold Voltage",
+  "powergrid.component.property.modular_display_threshold.summary": "Voltage above which the display module triggers"
+
 }

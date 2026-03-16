@@ -12,8 +12,10 @@ public class alphabetLetterModule implements IDisplayModule {
     private final DyeColor color;
     //counts A,B,C,D,E,F...X,Y,Z,Blank,A (first symbol repeated for smooth transition)
     public alphabetLetterModule(int Index, boolean halfClick, DyeColor color) {
-        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3)
-            throw new IllegalArgumentException("Index must be 0-"+ (getDisplayTextureCharacterCount() + 2) + ", got: " + Index);
+        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3){
+            Index = 0;
+            PowerGrid.LOGGER.warn("Index must be 0-" + (getDisplayTextureCharacterCount() + 3) + ", got: " + Index);
+        }
         this.Index = Index;
         this.halfClick = halfClick;
         this.color = color;

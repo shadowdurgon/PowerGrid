@@ -23,6 +23,7 @@ import org.patryk3211.powergrid.electricity.base.ThermalBehaviour;
 import org.patryk3211.powergrid.electricity.numericaldisplay.modules.*;
 import org.patryk3211.powergrid.electricity.sim.AbstractElectricWire;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
+import org.patryk3211.powergrid.utility.Lang;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity {
 
         moduleTypeBehaviour = new ScrollOptionBehaviour<>(
                 DisplayModuleType.class,
-                Component.translatable("Module Type"),
+                Lang.translateDirect("devices.modular_display.module_type"),
                 this,
                 new CustomValueBoxTransformer(this)
         ) {
@@ -196,6 +197,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity {
         for (AbstractElectricWire wire : wires) applyPower(wire);
         int w1 = 0, w2 = 1, w3 = 2;
         boolean updated = false;
+        boolean playSound = false;
         for (int i = 0; i < SLOT_COUNT; i++) {
             var coil = wires[w1];
             var coilNodeToNegative = (SwitchedWire) wires[w2];
@@ -211,12 +213,14 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity {
                 if (coilNodeToNegativeCurrent >= .5 && slot.getIndex() != charCount+1 && !slot.getHalfClick()) {
                     add1ToIndex(i);
                     setHalfClick(i, true);
-                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
+                    //ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
+                    playSound = true;
                     updated = true;
                 }
 
                 if (coilNodeToNegativeCurrent < .5 && slot.getIndex() == charCount+1 && coilNodeToNegative.getState()){
-                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
+                    playSound = true;
+                    //ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
                     coilNodeToNegative.setState(false);
                     coilNodeToReset.setState(true);
                     setHalfClick(i, false);
@@ -224,13 +228,15 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity {
                 }
 
                 if (coilNodeToNegativeCurrent < .5 && coilNodeToNegative.getState() && slot.getHalfClick()) {
+                    playSound = true;
                     setHalfClick(i, false);
-                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
+                    //ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
                     updated = true;
                 }
 
                 if (coilNodeToReset.getState() && coilNodeToResetCurrent >= .5 && slot.getIndex() == charCount+1) {
-                    ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
+                    playSound = true;
+                    //ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
                     add1ToIndex(i);
                     setHalfClick(i, true);
                     coilNodeToNegative.setState(true);
@@ -245,6 +251,11 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity {
             }
             w1+=3; w2+=3; w3+=3;
         }
+
+        if (playSound) {
+            ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
+        }
+
         if (updated) {
             markUpdated();
         }
