@@ -11,8 +11,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 
-public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer<numericalDisplayBlockEntity> {
-    public numericalDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+public class ModularDisplayBlockEntityRenderer extends SafeBlockEntityRenderer<ModularDisplayBlockEntity> {
+    public ModularDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
     private static final float SHEET_HEIGHT = 16f;
 
@@ -33,9 +33,9 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
     private static final float Z_NUDGE = 0.001f;
 
     @Override
-    protected void renderSafe(numericalDisplayBlockEntity be, float partialTicks, PoseStack pStack, MultiBufferSource buffer, int light, int overlay) {
+    protected void renderSafe(ModularDisplayBlockEntity be, float partialTicks, PoseStack pStack, MultiBufferSource buffer, int light, int overlay) {
 
-        Direction facing = be.getBlockState().getValue(numericalDisplayBlock.HORIZONTAL_FACING);
+        Direction facing = be.getBlockState().getValue(ModularDisplayBlock.HORIZONTAL_FACING);
         pStack.pushPose();
         pStack.translate(0.5, 0.5, 0.5);
 
@@ -57,7 +57,7 @@ public class numericalDisplayBlockEntityRenderer extends SafeBlockEntityRenderer
             for (int col = 0; col < GRID_COLS; col++) {
 
                 int slotIndex = row * GRID_COLS + col;
-                slotData slot = be.getSlot(slotIndex);
+                SlotData slot = be.getSlot(slotIndex);
 
                 if (slot.isEmpty()) continue;
 

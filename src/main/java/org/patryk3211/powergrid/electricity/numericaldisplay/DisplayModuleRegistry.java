@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-public class displayModuleRegistry {
+public class DisplayModuleRegistry {
 
     private static final Map<String, Function<String, IDisplayModule>> DESERIALIZERS = new HashMap<>();
 

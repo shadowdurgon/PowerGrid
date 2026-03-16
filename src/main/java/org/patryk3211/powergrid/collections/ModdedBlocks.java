@@ -78,7 +78,7 @@ import org.patryk3211.powergrid.electricity.grounding.GroundingRodBlock;
 import org.patryk3211.powergrid.electricity.heater.HeaterBlock;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlock;
 import org.patryk3211.powergrid.electricity.light.string.StringLightBlock;
-import org.patryk3211.powergrid.electricity.numericaldisplay.numericalDisplayBlock;
+import org.patryk3211.powergrid.electricity.numericaldisplay.ModularDisplayBlock;
 import org.patryk3211.powergrid.electricity.resistor.ResistorBlock;
 import org.patryk3211.powergrid.electricity.socket.SocketBlock;
 import org.patryk3211.powergrid.electricity.sparkgap.SparkGapBlock;
@@ -746,10 +746,11 @@ public class ModdedBlocks {
             .register();
 
 
-    public static BlockEntry<numericalDisplayBlock> NUMERICAL_DISPLAY = REGISTRATE.block("numerical", numericalDisplayBlock::new)
-            .initialProperties(SharedProperties::softMetal)
+    public static BlockEntry<ModularDisplayBlock> NUMERICAL_DISPLAY = REGISTRATE.block("numerical", ModularDisplayBlock::new)
+            .initialProperties(SharedProperties::stone)
             .blockstate(horizontalBlock("block/numerical_display/block"))
             .transform(pickaxeOnly())
+            .defaultLoot()
 //            .transform(CResistance.setResistance(20))
 //            .transform(CThermal.maxPower(50, 1.5f))
             .simpleItem()

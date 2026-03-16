@@ -16,37 +16,42 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.patryk3211.powergrid.collections.ModdedBlockEntities;
+import org.patryk3211.powergrid.collections.ModdedItems;
 import org.patryk3211.powergrid.electricity.base.HorizontalElectricBlock;
 import org.patryk3211.powergrid.electricity.base.IDecoratedTerminal;
 import org.patryk3211.powergrid.electricity.base.TerminalBoundingBox;
 import org.patryk3211.powergrid.electricity.info.IHaveElectricProperties;
+import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlockEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class numericalDisplayBlock extends HorizontalElectricBlock implements IBE<numericalDisplayBlockEntity>, IHaveElectricProperties {
+public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<ModularDisplayBlockEntity>, IHaveElectricProperties {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape NORTHSHAPE = Shapes.or(
             box(0,0,0 ,16,16,13)
     );
 
-    public numericalDisplayBlock(Properties settings) {
+    public ModularDisplayBlock(Properties settings) {
         super(settings);
         setTerminalCollection(horizontalNorthTerminals(this, NORTHTERMINALS, NORTHSHAPE));
     }
 
     @Override
-    public Class<numericalDisplayBlockEntity> getBlockEntityClass() {
-        return numericalDisplayBlockEntity.class;
+    public Class<ModularDisplayBlockEntity> getBlockEntityClass() {
+        return ModularDisplayBlockEntity.class;
     }
 
     @Override
-    public BlockEntityType<? extends numericalDisplayBlockEntity> getBlockEntityType() {
+    public BlockEntityType<? extends ModularDisplayBlockEntity> getBlockEntityType() {
         return ModdedBlockEntities.NUMERICAL_DISPLAY.get();
     }
 
@@ -62,7 +67,7 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 
-        Direction facing = state.getValue(numericalDisplayBlock.HORIZONTAL_FACING);
+        Direction facing = state.getValue(ModularDisplayBlock.HORIZONTAL_FACING);
 
         if (hit.getDirection() != facing) return InteractionResult.PASS;
 
@@ -92,18 +97,37 @@ public class numericalDisplayBlock extends HorizontalElectricBlock implements IB
         BlockEntity be = level.getBlockEntity(pos);
 
         if (player.getMainHandItem().getItem() instanceof DyeItem dye) {
-            if (be instanceof numericalDisplayBlockEntity display) {
+            if (be instanceof ModularDisplayBlockEntity display) {
                 display.setColor(slotIndex, dye.getDyeColor());
                 if (!player.isCreative()) player.getMainHandItem().shrink(1);
                 return InteractionResult.CONSUME;
             }
         }
 
-        if (be instanceof numericalDisplayBlockEntity display) {
+        if (be instanceof ModularDisplayBlockEntity display) {
             display.interact(slotIndex, player);
         }
 
         return InteractionResult.CONSUME;
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        var be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        int modulesToDrop = 0;
+        if(be instanceof ModularDisplayBlockEntity DisplayBE) {
+            for(int i = 0; i < ModularDisplayBlockEntity.SLOT_COUNT; i++) {
+                if(!DisplayBE.getSlot(i).isEmpty()){
+                    modulesToDrop += 1;
+                }
+            }
+            if(modulesToDrop > 0) {
+                var drops = new ArrayList<>(super.getDrops(state, params));
+                drops.add(new ItemStack(ModdedItems.DISPLAY_MODULE.asItem(), modulesToDrop));
+                return drops;
+            }
+        }
+        return super.getDrops(state, params);
     }
 
     private static final TerminalBoundingBox[] NORTHTERMINALS = new TerminalBoundingBox[]{

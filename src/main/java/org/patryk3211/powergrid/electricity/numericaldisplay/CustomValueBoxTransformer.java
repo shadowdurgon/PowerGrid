@@ -14,7 +14,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-public class SingleSlotTransform extends ValueBoxTransform {
+public class CustomValueBoxTransformer extends ValueBoxTransform {
 
     @Override
     public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
@@ -28,15 +28,15 @@ public class SingleSlotTransform extends ValueBoxTransform {
 
         return rotateHorizontally(state, new Vec3(x, y, z-0.015));
     }
-    private final numericalDisplayBlockEntity blockEntity;
+    private final ModularDisplayBlockEntity blockEntity;
 
-    public SingleSlotTransform(numericalDisplayBlockEntity blockEntity) {
+    public CustomValueBoxTransformer(ModularDisplayBlockEntity blockEntity) {
         this.blockEntity = blockEntity;
     }
 
     @Override
     public boolean testHit(LevelAccessor level, BlockPos pos, BlockState state, Vec3 localHit) {
-        Direction facing = state.getValue(numericalDisplayBlock.HORIZONTAL_FACING);
+        Direction facing = state.getValue(ModularDisplayBlock.HORIZONTAL_FACING);
 
         double bestDist = Double.MAX_VALUE;
         int bestSlot = 0;
@@ -67,9 +67,12 @@ public class SingleSlotTransform extends ValueBoxTransform {
         blockEntity.lastHitSlot = bestSlot;
         blockEntity.syncBehaviourToSlot(bestSlot);
 
-        Minecraft mc = Minecraft.getInstance();
-        ItemStack held = mc.player.getMainHandItem();
-        if (held.getItem() instanceof DyeItem) return false;
+        if (level.isClientSide()){
+            Minecraft mc = Minecraft.getInstance();
+            ItemStack held = mc.player.getMainHandItem();
+            if (held.getItem() instanceof DyeItem) return false;
+        }
+
 
         if (blockEntity.modules[bestSlot] == null) return false;
 
@@ -79,7 +82,7 @@ public class SingleSlotTransform extends ValueBoxTransform {
     @Override
     public void rotate(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
         float yRot = AngleHelper.horizontalAngle(
-                state.getValue(numericalDisplayBlock.HORIZONTAL_FACING)
+                state.getValue(ModularDisplayBlock.HORIZONTAL_FACING)
         ) + 180;
         TransformStack.of(ms).rotateYDegrees(yRot);
     }

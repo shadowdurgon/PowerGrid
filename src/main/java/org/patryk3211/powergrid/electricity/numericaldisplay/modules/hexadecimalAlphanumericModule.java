@@ -12,8 +12,8 @@ public class hexadecimalAlphanumericModule implements IDisplayModule {
     private final DyeColor color;
     //counts 0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,blank,0 (first number repeated for smooth transition)
     public hexadecimalAlphanumericModule(int Index, boolean halfClick, DyeColor color) {
-        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 2)
-            throw new IllegalArgumentException("Index must be 0-"+getDisplayTextureCharacterCount() + 2 + ", got: " + Index);
+        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3)
+            throw new IllegalArgumentException("Index must be 0-"+ (getDisplayTextureCharacterCount() + 2) + ", got: " + Index);
         this.Index = Index;
         this.halfClick = halfClick;
         this.color = color;

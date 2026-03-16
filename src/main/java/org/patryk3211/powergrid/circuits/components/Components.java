@@ -231,7 +231,7 @@ public class Components {
             .item(ModdedItems.VARISTOR)
             .register();
 
-    public static final RegistryEntry<Component, NumericalDisplayComponent> DISPLAY_MODULE = REGISTRATE.component("display_module", NumericalDisplayComponent::new)
+    public static final RegistryEntry<Component, ModularDisplayComponent> DISPLAY_MODULE = REGISTRATE.component("display_module", ModularDisplayComponent::new)
             .footprint(4, 4, b -> b
                     .addPad(0, 1, 0, "numerical.positive", "P")
                     .addPad(3, 2, 1, "numerical.negitive", "N")

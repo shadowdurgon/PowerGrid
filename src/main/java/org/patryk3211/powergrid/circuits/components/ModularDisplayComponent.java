@@ -32,7 +32,7 @@ import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 import org.patryk3211.powergrid.network.packets.UpdateComponentBiPacket;
 import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
 
-public class NumericalDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
+public class ModularDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
     public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "numerical_display_threshold", 13, 1, 30);
     public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "numerical_display_index", 1, 0, 30).hidden().cast();
     public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "numerical_display_half_click").hidden().cast();
@@ -46,7 +46,7 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
 
     private ValueSettingsBoard board = null;
 
-    public NumericalDisplayComponent(ComponentFootprint footprint) {
+    public ModularDisplayComponent(ComponentFootprint footprint) {
         super(footprint);
     }
 
@@ -152,14 +152,14 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
                 coilNodeToNegative.setState(false);
                 coilNodeToReset.setState(true);
                 placed.set(HALF_CLICK, false);
-                placed.notifyClients(INDEX);
+                //placed.notifyClients(INDEX);
                 placed.notifyClients(HALF_CLICK);
             }
 
             if (coilNodeToNegativeCurrent < .5 && coilNodeToNegative.getState() && placed.get(HALF_CLICK)) {
                 placed.set(HALF_CLICK, false);
                 placed.onServerWorld(() -> world -> ModdedSoundEvents.RELAY_CLICK.playOnServer(world, placed.getPos(), 0.75f, 1.9f));
-                placed.notifyClients(INDEX);
+                //placed.notifyClients(INDEX);
                 placed.notifyClients(HALF_CLICK);
             }
 
@@ -220,7 +220,7 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         if (halfClick){
             frameIndex -= .5f;
         }
-        var temp = "block/numerical_display/" + placed.get(DISPLAYED_TEXTURE);
+        var displayTexture = "block/numerical_display/" + placed.get(DISPLAYED_TEXTURE);
 
         float innerX = 0 + INNER_OFFSET;
         float innerY = 0 + INNER_UD_OFFSET;
@@ -233,7 +233,7 @@ public class NumericalDisplayComponent extends OrientableComponent implements IR
         int rgb = DyeColor.byName(placed.get(CURRENT_COLOR), DyeColor.WHITE).getTextureDiffuseColor();
 
         renderQuad(matrix, buffer,
-                PowerGrid.texture(temp),
+                PowerGrid.texture(displayTexture),
                 innerX, innerY,
                 INNER_RL_SIZE, INNER_UD_SIZE,
                 uMin, vMin, uMax, vMax,

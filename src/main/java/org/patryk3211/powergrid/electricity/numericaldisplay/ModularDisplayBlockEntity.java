@@ -11,6 +11,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,12 +26,11 @@ import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 
 import java.util.List;
 
-public class numericalDisplayBlockEntity extends ElectricBlockEntity {
+public class ModularDisplayBlockEntity extends ElectricBlockEntity {
     private AbstractElectricWire[] wires;
     public static final int SLOT_COUNT = 16;
     private ScrollOptionBehaviour<DisplayModuleType> moduleTypeBehaviour;
     public int lastHitSlot = 0;
-
     public final IDisplayModule[] modules = new IDisplayModule[SLOT_COUNT];
 
     @Override
@@ -41,8 +41,14 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
                 DisplayModuleType.class,
                 Component.translatable("Module Type"),
                 this,
-                new SingleSlotTransform(this)
-        );
+                new CustomValueBoxTransformer(this)
+        ) {
+            @Override
+            public boolean bypassesInput(ItemStack mainhandItem) {
+                return mainhandItem.getItem() instanceof DyeItem;
+            }
+        };
+
         moduleTypeBehaviour.setValue(0);
         moduleTypeBehaviour.withCallback(value -> onSlotTypeChanged(lastHitSlot, value));
         behaviours.add(moduleTypeBehaviour);
@@ -67,9 +73,9 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
         moduleTypeBehaviour.value = modules[slot].getDisplayModuleType().ordinal();
     }
 
-    public slotData getSlot(int index) {
-        if (index < 0 || index >= SLOT_COUNT) return slotData.empty();
-        return new slotData(modules[index]);
+    public SlotData getSlot(int index) {
+        if (index < 0 || index >= SLOT_COUNT) return SlotData.empty();
+        return new SlotData(modules[index]);
     }
 
     public boolean interact(int slotIndex, Player player){
@@ -154,7 +160,7 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
         if (tag.contains("slots", Tag.TAG_LIST)) {
             ListTag slotList = tag.getList("slots", Tag.TAG_STRING);
             for (int i = 0; i < Math.min(slotList.size(), SLOT_COUNT); i++) {
-                modules[i] = displayModuleRegistry.deserialize(slotList.getString(i));
+                modules[i] = DisplayModuleRegistry.deserialize(slotList.getString(i));
             }
         }
     }
@@ -189,6 +195,7 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
     public void electricalTick() {
         for (AbstractElectricWire wire : wires) applyPower(wire);
         int w1 = 0, w2 = 1, w3 = 2;
+        boolean updated = false;
         for (int i = 0; i < SLOT_COUNT; i++) {
             var coil = wires[w1];
             var coilNodeToNegative = (SwitchedWire) wires[w2];
@@ -201,11 +208,11 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
                 //every module display texture has the characters in the sprite plus a blank space and the first character again for smooth transition
                 //but im only counting characters before the blank space and adding one for the blank space and two for the transition
                 var temp = coilNodeToNegative.current();
-                if (coilNodeToNegativeCurrent >= .5 && slot.getIndex() != charCount+1 && !slot.getModule().getHalfClick()) {
+                if (coilNodeToNegativeCurrent >= .5 && slot.getIndex() != charCount+1 && !slot.getHalfClick()) {
                     add1ToIndex(i);
                     setHalfClick(i, true);
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 2f);
-                    markUpdated();
+                    updated = true;
                 }
 
                 if (coilNodeToNegativeCurrent < .5 && slot.getIndex() == charCount+1 && coilNodeToNegative.getState()){
@@ -213,13 +220,13 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
                     coilNodeToNegative.setState(false);
                     coilNodeToReset.setState(true);
                     setHalfClick(i, false);
-                    markUpdated();
+                    updated = true;
                 }
 
-                if (coilNodeToNegativeCurrent < .5 && coilNodeToNegative.getState() && slot.getModule().getHalfClick()) {
+                if (coilNodeToNegativeCurrent < .5 && coilNodeToNegative.getState() && slot.getHalfClick()) {
                     setHalfClick(i, false);
                     ModdedSoundEvents.RELAY_CLICK.playOnServer(level, worldPosition, .75f, 1.9f);
-                    markUpdated();
+                    updated = true;
                 }
 
                 if (coilNodeToReset.getState() && coilNodeToResetCurrent >= .5 && slot.getIndex() == charCount+1) {
@@ -228,16 +235,20 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
                     setHalfClick(i, true);
                     coilNodeToNegative.setState(true);
                     coilNodeToReset.setState(false);
-                    markUpdated();
+                    updated = true;
                 }
 
-                if (slot.getIndex() >= charCount+2 && !slot.isHalfClick()){
+                if (slot.getIndex() >= charCount+2 && !slot.getHalfClick()){
                     setIndex(i, 0);
-                    markUpdated();
+                    updated = true;
                 }
             }
             w1+=3; w2+=3; w3+=3;
         }
+        if (updated) {
+            markUpdated();
+        }
+
     }
 
     @Override
@@ -245,7 +256,7 @@ public class numericalDisplayBlockEntity extends ElectricBlockEntity {
         return super.specifyThermalBehaviour();
     }
 
-    public numericalDisplayBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    public ModularDisplayBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 

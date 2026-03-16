@@ -12,8 +12,8 @@ public class nineToZeroNumberModule implements IDisplayModule {
     private final DyeColor color;
     //counts 9,8,7,6,5,4,3,2,1,0,blank,9 (first number repeated for smooth transition)
     public nineToZeroNumberModule(int Index, boolean halfClick, DyeColor color) {
-        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 2)
-            throw new IllegalArgumentException("Index must be 0-"+getDisplayTextureCharacterCount() + 2 + ", got: " + Index);
+        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3)
+            throw new IllegalArgumentException("Index must be 0-"+ (getDisplayTextureCharacterCount() + 2) + ", got: " + Index);
         this.Index = Index;
         this.halfClick = halfClick;
         this.color = color;

@@ -2,22 +2,22 @@ package org.patryk3211.powergrid.electricity.numericaldisplay;
 
 import org.jetbrains.annotations.Nullable;
 
-public class slotData {
+public class SlotData {
 
     @Nullable
     private final IDisplayModule module;
 
-    public slotData(@Nullable IDisplayModule module) {
+    public SlotData(@Nullable IDisplayModule module) {
         this.module = module;
     }
 
-    public static slotData empty() {
-        return new slotData(null);
+    public static SlotData empty() {
+        return new SlotData(null);
     }
 
     public boolean isEmpty()    { return module == null; }
 
-    public boolean isHalfClick() { return module.getHalfClick();}
+    public boolean getHalfClick() { return module.getHalfClick();}
 
     public int getIndex() {
         return module != null ? module.getIndex() : -1;

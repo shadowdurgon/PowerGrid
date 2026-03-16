@@ -12,8 +12,8 @@ public class symbolLetterModule implements IDisplayModule {
     private final DyeColor color;
     //counts .,comma,<,>,=,+,-,x,/,blank,. (first symbol repeated for smooth transition)
     public symbolLetterModule(int Index, boolean halfClick, DyeColor color){
-        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 2)
-            throw new IllegalArgumentException("Index must be 0-"+getDisplayTextureCharacterCount() + 2 + ", got: " + Index);
+        if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3)
+            throw new IllegalArgumentException("Index must be 0-"+ (getDisplayTextureCharacterCount() + 2) + ", got: " + Index);
         this.Index = Index;
         this.halfClick = halfClick;
         this.color = color;
