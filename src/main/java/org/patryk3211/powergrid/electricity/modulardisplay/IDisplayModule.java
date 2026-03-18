@@ -1,8 +1,8 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay;
+package org.patryk3211.powergrid.electricity.modulardisplay;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
+import org.patryk3211.powergrid.electricity.sim.AbstractElectricWire;
 
 public interface IDisplayModule {
 
@@ -36,6 +36,16 @@ public interface IDisplayModule {
     default int getDisplayTextureCharacterCount() {return 0;}
 
     default ResourceLocation getModuleModel() {return null;}
+
+    default void thermalTick(AbstractElectricWire wire1, AbstractElectricWire wire2, AbstractElectricWire wire3) {}
+
+    default boolean hasOverheated() {return false;}
+
+    default float getTemperature() {return 0;}
+
+    default float getOverheatTemperature() {return 0;}
+
+    default boolean isDamaged() {return false;}
 
     String serialize();
 

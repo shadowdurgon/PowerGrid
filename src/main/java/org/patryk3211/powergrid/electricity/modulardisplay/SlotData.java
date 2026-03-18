@@ -1,4 +1,4 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay;
+package org.patryk3211.powergrid.electricity.modulardisplay;
 
 import org.jetbrains.annotations.Nullable;
 

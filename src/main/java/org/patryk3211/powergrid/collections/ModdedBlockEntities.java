@@ -45,8 +45,8 @@ import org.patryk3211.powergrid.electricity.grounding.GroundingRodBlockEntity;
 import org.patryk3211.powergrid.electricity.heater.HeaterBlockEntity;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlockEntity;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureRenderer;
-import org.patryk3211.powergrid.electricity.numericaldisplay.ModularDisplayBlockEntity;
-import org.patryk3211.powergrid.electricity.numericaldisplay.ModularDisplayBlockEntityRenderer;
+import org.patryk3211.powergrid.electricity.modulardisplay.ModularDisplayBlockEntity;
+import org.patryk3211.powergrid.electricity.modulardisplay.ModularDisplayBlockEntityRenderer;
 import org.patryk3211.powergrid.electricity.resistor.ResistorBlockEntity;
 import org.patryk3211.powergrid.electricity.socket.SocketBlockEntity;
 import org.patryk3211.powergrid.electricity.sparkgap.SparkGapBlockEntity;
@@ -351,9 +351,9 @@ public class ModdedBlockEntities {
                     .renderer(() -> PunchCardReaderRenderer::new)
                     .register();
 
-    public static final BlockEntityEntry<ModularDisplayBlockEntity> NUMERICAL_DISPLAY =
-            REGISTRATE.<ModularDisplayBlockEntity>blockEntity("numerical_display", ModularDisplayBlockEntity::new)
-                    .validBlock(ModdedBlocks.NUMERICAL_DISPLAY)
+    public static final BlockEntityEntry<ModularDisplayBlockEntity> MODULAR_DISPLAY =
+            REGISTRATE.<ModularDisplayBlockEntity>blockEntity("modular_display", ModularDisplayBlockEntity::new)
+                    .validBlock(ModdedBlocks.MODULAR_DISPLAY)
                     .renderer(() -> ModularDisplayBlockEntityRenderer::new)
                     .register();
 

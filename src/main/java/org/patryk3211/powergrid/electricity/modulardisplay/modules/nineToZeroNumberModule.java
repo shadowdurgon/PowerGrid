@@ -1,10 +1,10 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay.modules;
+package org.patryk3211.powergrid.electricity.modulardisplay.modules;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import org.patryk3211.powergrid.PowerGrid;
-import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
-import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
+import org.patryk3211.powergrid.electricity.modulardisplay.DisplayModuleType;
+import org.patryk3211.powergrid.electricity.modulardisplay.IDisplayModule;
 
 public class nineToZeroNumberModule implements IDisplayModule {
     private final int Index;
@@ -38,7 +38,7 @@ public class nineToZeroNumberModule implements IDisplayModule {
 
     @Override
     public ResourceLocation getDisplayTexture() {
-        return PowerGrid.texture("block/numerical_display/ninetozero");
+        return PowerGrid.texture("block/modular_display/ninetozero");
     }
 
     public float getDisplayTextureSize() {

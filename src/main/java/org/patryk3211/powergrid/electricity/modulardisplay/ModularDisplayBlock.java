@@ -1,4 +1,4 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay;
+package org.patryk3211.powergrid.electricity.modulardisplay;
 
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
@@ -28,7 +28,6 @@ import org.patryk3211.powergrid.electricity.base.HorizontalElectricBlock;
 import org.patryk3211.powergrid.electricity.base.IDecoratedTerminal;
 import org.patryk3211.powergrid.electricity.base.TerminalBoundingBox;
 import org.patryk3211.powergrid.electricity.info.IHaveElectricProperties;
-import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlockEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +51,7 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
 
     @Override
     public BlockEntityType<? extends ModularDisplayBlockEntity> getBlockEntityType() {
-        return ModdedBlockEntities.NUMERICAL_DISPLAY.get();
+        return ModdedBlockEntities.MODULAR_DISPLAY.get();
     }
 
     @Override

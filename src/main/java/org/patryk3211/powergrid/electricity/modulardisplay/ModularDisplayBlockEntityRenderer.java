@@ -1,4 +1,4 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay;
+package org.patryk3211.powergrid.electricity.modulardisplay;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -60,6 +60,8 @@ public class ModularDisplayBlockEntityRenderer extends SafeBlockEntityRenderer<M
                 SlotData slot = be.getSlot(slotIndex);
 
                 if (slot.isEmpty()) continue;
+
+                if (slot.getModule().isDamaged()) continue;
 
                 var halfClick = slot.getModule().getHalfClick();
 

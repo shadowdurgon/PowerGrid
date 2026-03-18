@@ -1,17 +1,17 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay.modules;
+package org.patryk3211.powergrid.electricity.modulardisplay.modules;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import org.patryk3211.powergrid.PowerGrid;
-import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
-import org.patryk3211.powergrid.electricity.numericaldisplay.IDisplayModule;
+import org.patryk3211.powergrid.electricity.modulardisplay.DisplayModuleType;
+import org.patryk3211.powergrid.electricity.modulardisplay.IDisplayModule;
 
-public class hexadecimalAlphanumericModule implements IDisplayModule {
+public class symbolLetterModule implements IDisplayModule {
     private final int Index;
     private final boolean halfClick;
     private final DyeColor color;
-    //counts 0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,blank,0 (first number repeated for smooth transition)
-    public hexadecimalAlphanumericModule(int Index, boolean halfClick, DyeColor color) {
+    //counts .,comma,<,>,=,+,-,x,/,blank,. (first symbol repeated for smooth transition)
+    public symbolLetterModule(int Index, boolean halfClick, DyeColor color){
         if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3){
             Index = 0;
             PowerGrid.LOGGER.warn("Index must be 0-" + (getDisplayTextureCharacterCount() + 3) + ", got: " + Index);
@@ -23,34 +23,34 @@ public class hexadecimalAlphanumericModule implements IDisplayModule {
 
     @Override
     public IDisplayModule withIndex(int newIndex) {
-        return new hexadecimalAlphanumericModule(newIndex, this.halfClick, this.color);
+        return new symbolLetterModule(newIndex, this.halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withHalfClick(boolean halfClick) {
-        return new hexadecimalAlphanumericModule(this.Index, halfClick, this.color);
+        return new symbolLetterModule(this.Index, halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withColor(DyeColor color) {
-        return new hexadecimalAlphanumericModule(this.Index, this.halfClick, color);
+        return new symbolLetterModule(this.Index, this.halfClick, color);
     }
 
     public float getDisplayTextureSize() {
-        return 112f;
+        return 80f;
     }
 
     public int getDisplayTextureCharacterCount() {
-        return 15;
+        return 8;
     }
 
     @Override
     public ResourceLocation getDisplayTexture() {
-        return PowerGrid.texture("block/numerical_display/zerotof");
+        return PowerGrid.texture("block/modular_display/symbols");
     }
 
     public DisplayModuleType getDisplayModuleType() {
-        return DisplayModuleType.HEXADECIMAL;
+        return DisplayModuleType.SYMBOLS;
     }
 
     public boolean getHalfClick() {
@@ -59,11 +59,10 @@ public class hexadecimalAlphanumericModule implements IDisplayModule {
 
     @Override
     public ModuleType getType() {
-        return ModuleType.ALPHANUMERIC;
+        return ModuleType.LETTER;
     }
 
-    @Override
-    public int getIndex() {
+    @Override public int getIndex() {
         return Index;
     }
 
@@ -72,9 +71,7 @@ public class hexadecimalAlphanumericModule implements IDisplayModule {
         return color;
     }
 
-    @Override
-    public String serialize() {
-        return "hexadecimal:" + Index + ":" + halfClick + ":" + color;
+    @Override public String serialize() {
+        return "symbol:" + Index + ":" + halfClick + ":" + color;
     }
-
 }

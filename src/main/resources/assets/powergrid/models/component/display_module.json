@@ -2,8 +2,8 @@
 	"format_version": "1.9.0",
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "powergrid:block/component/numerical_display",
-		"particle": "powergrid:block/component/numerical_display"
+		"0": "powergrid:block/component/modular_display",
+		"particle": "powergrid:block/component/modular_display"
 	},
 	"elements": [
 		{

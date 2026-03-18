@@ -20,30 +20,15 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.electricity.light.string.PatternData;
 import org.patryk3211.powergrid.electricity.wire.WireConnection;
-
-import java.util.function.Supplier;
 
 public class ModdedDataComponents {
     public static final DeferredRegister<DataComponentType<?>> REGISTER = DeferredRegister.create(PowerGrid.MOD_ID, Registries.DATA_COMPONENT_TYPE);
 
     public static final RegistrySupplier<DataComponentType<PatternData>> LIGHT_PATTERN = persistent("pattern", PatternData.CODEC);
     public static final RegistrySupplier<DataComponentType<WireConnection>> CONNECTION_DATA = persistent("connection", WireConnection.CODEC);
-
-    public static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(PowerGrid.MOD_ID, Registries.DATA_COMPONENT_TYPE);
-
-
-    public static final Supplier<DataComponentType<Integer>> DIGIT_VALUE =
-            COMPONENTS.register("digit_value", () ->
-                    DataComponentType.<Integer>builder()
-                            .persistent(Codec.INT)
-                            .networkSynchronized(ByteBufCodecs.INT)
-                            .build()
-            );
 
     public static <T> RegistrySupplier<DataComponentType<T>> persistent(String id, Codec<T> codec) {
         return REGISTER.register(id, () -> DataComponentType.<T>builder().persistent(codec).build());

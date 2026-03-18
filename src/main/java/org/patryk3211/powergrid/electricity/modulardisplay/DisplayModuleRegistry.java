@@ -1,7 +1,7 @@
-package org.patryk3211.powergrid.electricity.numericaldisplay;
+package org.patryk3211.powergrid.electricity.modulardisplay;
 
 import net.minecraft.world.item.DyeColor;
-import org.patryk3211.powergrid.electricity.numericaldisplay.modules.*;
+import org.patryk3211.powergrid.electricity.modulardisplay.modules.*;
 
 import java.util.HashMap;
 import java.util.Map;

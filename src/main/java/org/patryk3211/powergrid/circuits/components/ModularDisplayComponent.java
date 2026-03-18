@@ -27,7 +27,7 @@ import org.patryk3211.powergrid.circuits.schematic.PlacedComponent;
 import org.patryk3211.powergrid.circuits.thermal.ThermalBuilder;
 import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
-import org.patryk3211.powergrid.electricity.numericaldisplay.DisplayModuleType;
+import org.patryk3211.powergrid.electricity.modulardisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 import org.patryk3211.powergrid.network.packets.UpdateComponentBiPacket;
 import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
@@ -194,11 +194,9 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
         thermals.builder()
                 .setThermalMass(0.15f)
                 .setMaxPower(25, 125f)
-                .addHeatSource(coilNodeToReset);
-        thermals.builder()
-                .setThermalMass(0.15f)
-                .setMaxPower(25, 125f)
-                .addHeatSource(coilNodeToNegitive);
+                .addHeatSource(coilNodeToReset)
+                .addHeatSource(coilNodeToNegitive)
+                .addHeatSource(coil);
 
     }
 
@@ -222,7 +220,7 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
         if (halfClick){
             frameIndex -= .5f;
         }
-        var displayTexture = "block/numerical_display/" + placed.get(DISPLAYED_TEXTURE);
+        var displayTexture = "block/modular_display/" + placed.get(DISPLAYED_TEXTURE);
 
         float innerX = 0 + INNER_OFFSET;
         float innerY = 0 + INNER_UD_OFFSET;
@@ -273,7 +271,7 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
 
     @Override
     public VoxelShape getShape(@NotNull PlacedComponent placed) {
-        return IInteractableComponent.extrudedFootprint(placed, 8 / 16f);
+        return IInteractableComponent.extrudedFootprint(placed, 7 / 16f);
     }
 
     @Override
