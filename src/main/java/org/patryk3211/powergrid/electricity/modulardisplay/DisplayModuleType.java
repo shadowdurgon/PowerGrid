@@ -4,7 +4,7 @@ import com.simibubi.create.foundation.gui.AllIcons;
 import org.patryk3211.powergrid.utility.Lang;
 
 public enum DisplayModuleType implements INamedIconOptions {
-    ZERO_TO_NINE(Lang.translateDirect("gui.modular_display.0 - 9").getString(), AllIcons.I_NONE), // 0-9
+    ZERO_TO_NINE(Lang.translateDirect("gui.modular_display.0 - 9").getString(), AllIcons.I_NONE),
     NINE_TO_ZERO(Lang.translateDirect("gui.modular_display.9 - 0").getString(), AllIcons.I_NONE),
     ONE_TO_ZERO(Lang.translateDirect("gui.modular_display.1 - 0").getString(), AllIcons.I_NONE),
     HEXADECIMAL(Lang.translateDirect("gui.modular_display.hexadecimal").getString(), AllIcons.I_NONE),

@@ -17,7 +17,7 @@ public class DisplayModuleRegistry {
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
             DyeColor color = DyeColor.byName(parts[2], DyeColor.WHITE);
-            return new oneToZeroNumberModule(digit, halfClick, color);
+            return new OneToZeroNumberModule(digit, halfClick, color);
         });
 
         register("zerotonine", value -> {
@@ -25,35 +25,35 @@ public class DisplayModuleRegistry {
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
             DyeColor color = DyeColor.byName(parts[2], DyeColor.WHITE);
-            return new zeroToNineNumberModule(digit, halfClick, color);
+            return new ZeroToNineNumberModule(digit, halfClick, color);
         });
         register("symbol", value -> {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
             DyeColor color = DyeColor.byName(parts[2], DyeColor.WHITE);
-            return new symbolLetterModule(digit, halfClick, color);
+            return new SymbolLetterModule(digit, halfClick, color);
         });
         register("hexadecimal", value -> {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
             DyeColor color = DyeColor.byName(parts[2], DyeColor.WHITE);
-            return new hexadecimalAlphanumericModule(digit, halfClick, color);
+            return new HexadecimalAlphanumericModule(digit, halfClick, color);
         });
         register("ninetozero", value -> {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
             DyeColor color = DyeColor.byName(parts[2], DyeColor.WHITE);
-            return new nineToZeroNumberModule(digit, halfClick, color);
+            return new NineToZeroNumberModule(digit, halfClick, color);
         });
         register("alphabet", value -> {
             String[] parts = value.split(":");
             int digit = Integer.parseInt(parts[0]);
             boolean halfClick = parts.length > 1 && Boolean.parseBoolean(parts[1]);
             DyeColor color = DyeColor.byName(parts[2], DyeColor.WHITE);
-            return new alphabetLetterModule(digit, halfClick, color);
+            return new AlphabetLetterModule(digit, halfClick, color);
         });
 
     }

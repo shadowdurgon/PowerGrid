@@ -233,9 +233,9 @@ public class Components {
 
     public static final RegistryEntry<Component, ModularDisplayComponent> DISPLAY_MODULE = REGISTRATE.component("display_module", ModularDisplayComponent::new)
             .footprint(4, 4, b -> b
-                    .addPad(0, 1, 0, "numerical.positive", "P")
-                    .addPad(3, 2, 1, "numerical.negitive", "N")
-                    .addPad(2, 0, 2, "numerical.reset", "R")
+                    .addPadSharedText(0, 1, 0, "generic.positive", "generic.positive.short")
+                    .addPadSharedText(3, 2, 1, "generic.negative", "generic.negative.short")
+                    .addPadSharedText(2, 0, 2, "display_module.reset", "display_module.reset.short")
                     .withItem().withOutline()
             )
             .item(ModdedItems.DISPLAY_MODULE)

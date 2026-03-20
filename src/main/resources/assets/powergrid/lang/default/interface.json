@@ -87,6 +87,7 @@
   "powergrid.tooltip.resistance.minimum": "Minimum resistance:",
   "powergrid.tooltip.voltage.max": "Maximum voltage:",
   "powergrid.tooltip.current.max": "Maximum current:",
+  "powergrid.tooltip.current.min": "Minimum current:",
   "powergrid.tooltip.range.max": "Maximum range:",
   "powergrid.tooltip.power.max": "Maximum power:",
 

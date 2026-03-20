@@ -6,15 +6,15 @@ import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.electricity.modulardisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.modulardisplay.IDisplayModule;
 
-public class zeroToNineNumberModule implements IDisplayModule {
+public class ZeroToNineNumberModule implements IDisplayModule {
     private final int Index;
     private final boolean halfClick;
     private final DyeColor color;
     //counts 0,1,2,3,4,5,6,7,8,9,blank,0 (first number repeated for smooth transition)
-    public zeroToNineNumberModule(int Index, boolean halfClick, DyeColor color) {
+    public ZeroToNineNumberModule(int Index, boolean halfClick, DyeColor color) {
         if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3) {
-            Index = 0;
             PowerGrid.LOGGER.warn("Index must be 0-" + (getDisplayTextureCharacterCount() + 3) + ", got: " + Index);
+            Index = 0;
         }
         this.Index = Index;
         this.halfClick = halfClick;
@@ -23,17 +23,22 @@ public class zeroToNineNumberModule implements IDisplayModule {
 
     @Override
     public IDisplayModule withIndex(int newIndex) {
-        return new zeroToNineNumberModule(newIndex, this.halfClick, this.color);
+        return new ZeroToNineNumberModule(newIndex, this.halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withHalfClick(boolean halfClick) {
-        return new zeroToNineNumberModule(this.Index, halfClick, this.color);
+        return new ZeroToNineNumberModule(this.Index, halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withColor(DyeColor color) {
-        return new zeroToNineNumberModule(this.Index, this.halfClick, color);
+        return new ZeroToNineNumberModule(this.Index, this.halfClick, color);
+    }
+
+    @Override
+    public IDisplayModule withDamaged(int damaged) {
+        return null;
     }
 
     @Override

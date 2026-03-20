@@ -6,15 +6,15 @@ import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.electricity.modulardisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.modulardisplay.IDisplayModule;
 
-public class oneToZeroNumberModule implements IDisplayModule {
+public class SymbolLetterModule implements IDisplayModule {
     private final int Index;
     private final boolean halfClick;
     private final DyeColor color;
-    //counts 1,2,3,4,5,6,7,8,9,0,blank,1 (first number repeated for smooth transition)
-    public oneToZeroNumberModule(int Index, boolean halfClick, DyeColor color) {
+    //counts .,comma,<,>,=,+,-,x,/,blank,. (first symbol repeated for smooth transition)
+    public SymbolLetterModule(int Index, boolean halfClick, DyeColor color){
         if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3){
-            Index = 0;
             PowerGrid.LOGGER.warn("Index must be 0-" + (getDisplayTextureCharacterCount() + 3) + ", got: " + Index);
+            Index = 0;
         }
         this.Index = Index;
         this.halfClick = halfClick;
@@ -23,17 +23,22 @@ public class oneToZeroNumberModule implements IDisplayModule {
 
     @Override
     public IDisplayModule withIndex(int newIndex) {
-        return new oneToZeroNumberModule(newIndex, this.halfClick, this.color);
+        return new SymbolLetterModule(newIndex, this.halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withHalfClick(boolean halfClick) {
-        return new oneToZeroNumberModule(this.Index, halfClick, this.color);
+        return new SymbolLetterModule(this.Index, halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withColor(DyeColor color) {
-        return new oneToZeroNumberModule(this.Index, this.halfClick, color);
+        return new SymbolLetterModule(this.Index, this.halfClick, color);
+    }
+
+    @Override
+    public IDisplayModule withDamaged(int damaged) {
+        return null;
     }
 
     public float getDisplayTextureSize() {
@@ -41,30 +46,37 @@ public class oneToZeroNumberModule implements IDisplayModule {
     }
 
     public int getDisplayTextureCharacterCount() {
-        return 9;
+        return 8;
     }
 
     @Override
     public ResourceLocation getDisplayTexture() {
-        return PowerGrid.texture("block/modular_display/onetozero");
+        return PowerGrid.texture("block/modular_display/symbols");
     }
 
     public DisplayModuleType getDisplayModuleType() {
-        return DisplayModuleType.ONE_TO_ZERO;
+        return DisplayModuleType.SYMBOLS;
     }
 
     public boolean getHalfClick() {
         return halfClick;
     }
 
-    @Override public ModuleType getType() { return ModuleType.DIGIT; }
+    @Override
+    public ModuleType getType() {
+        return ModuleType.LETTER;
+    }
 
-    @Override public int getIndex() { return Index; }
+    @Override public int getIndex() {
+        return Index;
+    }
 
     @Override
     public DyeColor getColor() {
         return color;
     }
 
-    @Override public String serialize() { return "onetozero:" + Index + ":" + halfClick + ":" + color; }
+    @Override public String serialize() {
+        return "symbol:" + Index + ":" + halfClick + ":" + color;
+    }
 }

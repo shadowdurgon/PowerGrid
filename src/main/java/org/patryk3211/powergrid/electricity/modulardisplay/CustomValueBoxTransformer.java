@@ -73,7 +73,6 @@ public class CustomValueBoxTransformer extends ValueBoxTransform {
             if (held.getItem() instanceof DyeItem) return false;
         }
 
-
         if (blockEntity.modules[bestSlot] == null) return false;
 
         return bestDist < 0.2;

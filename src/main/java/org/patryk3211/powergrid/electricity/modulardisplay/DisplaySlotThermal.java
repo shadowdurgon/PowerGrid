@@ -8,15 +8,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.patryk3211.powergrid.electricity.sim.AbstractElectricWire;
-
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
-public class DisplaySlotThermal extends BlockEntityBehaviour{
+public class DisplaySlotThermal extends BlockEntityBehaviour {
 
     public static final BehaviourType<DisplaySlotThermal>[] TYPES;
     private final BehaviourType<DisplaySlotThermal> type;
@@ -105,6 +103,7 @@ public class DisplaySlotThermal extends BlockEntityBehaviour{
                     (lastSyncedTemperature >= SMOKE_START_TEMPERATURE) !=
                             (temperature >= SMOKE_START_TEMPERATURE);
 
+            //todo This might be better done using a SyncAppender however those are done
             if (crossedSmokeThreshold || Math.abs(temperature - lastSyncedTemperature) > 1f) {
                 lastSyncedTemperature = temperature;
                 blockEntity.sendData();
@@ -115,42 +114,6 @@ public class DisplaySlotThermal extends BlockEntityBehaviour{
                 spawnSmokeParticles(world, pos, world.getRandom());
             }
         }
-    }
-
-    public static Vec3 getSlotPosition(BlockPos pos, int slotIndex, Direction facing) {
-        int col = slotIndex % 4;
-        int row = slotIndex / 4;
-
-        float cellX = (col * 4 + 2) / 16f;
-        float cellY = ((3 - row) * 4 + 2) / 16f;
-
-        float wx, wy, wz;
-        wy = pos.getY() + cellY;
-
-        switch (facing) {
-            case NORTH -> {
-                wx = pos.getX() + cellX;
-                wz = pos.getZ();
-            }
-            case SOUTH -> {
-                wx = pos.getX() + (1 - cellX);
-                wz = pos.getZ() + 1;
-            }
-            case WEST -> {
-                wx = pos.getX();
-                wz = pos.getZ() + (1 - cellX);
-            }
-            case EAST -> {
-                wx = pos.getX() + 1;
-                wz = pos.getZ() + cellX;
-            }
-            default -> {
-                wx = pos.getX() + 0.5f;
-                wz = pos.getZ() + 0.5f;
-            }
-        }
-
-        return new Vec3(wx, wy, wz);
     }
 
     private void spawnSmokeParticles(Level world, BlockPos pos, RandomSource random) {
@@ -166,33 +129,33 @@ public class DisplaySlotThermal extends BlockEntityBehaviour{
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.getValue(ModularDisplayBlock.HORIZONTAL_FACING);
 
-        float wx, wy, wz;
-        wy = pos.getY() + cellY + random.nextFloat() * 0.1f;
+        float x, y, z;
+        y = pos.getY() + cellY + random.nextFloat() * 0.1f;
 
         switch (facing) {
             case NORTH -> {
-                wx = pos.getX() + cellX;
-                wz = pos.getZ() + random.nextFloat() * 0.05f;
+                x = pos.getX() + cellX;
+                z = pos.getZ() + random.nextFloat() * 0.05f;
             }
             case SOUTH -> {
-                wx = pos.getX() + (1 - cellX);
-                wz = pos.getZ() + 1 - random.nextFloat() * 0.05f;
+                x = pos.getX() + (1 - cellX);
+                z = pos.getZ() + 1 - random.nextFloat() * 0.05f;
             }
             case WEST -> {
-                wx = pos.getX() + random.nextFloat() * 0.05f;
-                wz = pos.getZ() + (1 - cellX);
+                x = pos.getX() + random.nextFloat() * 0.05f;
+                z = pos.getZ() + (1 - cellX);
             }
             case EAST -> {
-                wx = pos.getX() + 1 - random.nextFloat() * 0.05f;
-                wz = pos.getZ() + cellX;
+                x = pos.getX() + 1 - random.nextFloat() * 0.05f;
+                z = pos.getZ() + cellX;
             }
             default -> {
-                wx = pos.getX() + 0.5f;
-                wz = pos.getZ() + 0.5f;
+                x = pos.getX() + 0.5f;
+                z = pos.getZ() + 0.5f;
             }
         }
 
-        world.addParticle(ParticleTypes.SMOKE, wx, wy, wz, 0.0f, 0.05f, 0.0f);
+        world.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0f, 0.05f, 0.0f);
     }
 
     public void applyTickPower(double power) {
@@ -210,10 +173,6 @@ public class DisplaySlotThermal extends BlockEntityBehaviour{
 
     public boolean isOverheated() {
         return temperature >= OVERHEAT_TEMPERATURE;
-    }
-
-    public boolean isSmoking() {
-        return temperature >= SMOKE_START_TEMPERATURE;
     }
 
     public float getTemperature() {

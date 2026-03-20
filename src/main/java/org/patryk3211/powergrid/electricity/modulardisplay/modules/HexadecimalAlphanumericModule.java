@@ -6,15 +6,15 @@ import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.electricity.modulardisplay.DisplayModuleType;
 import org.patryk3211.powergrid.electricity.modulardisplay.IDisplayModule;
 
-public class nineToZeroNumberModule implements IDisplayModule {
+public class HexadecimalAlphanumericModule implements IDisplayModule {
     private final int Index;
     private final boolean halfClick;
     private final DyeColor color;
-    //counts 9,8,7,6,5,4,3,2,1,0,blank,9 (first number repeated for smooth transition)
-    public nineToZeroNumberModule(int Index, boolean halfClick, DyeColor color) {
+    //counts 0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,blank,0 (first number repeated for smooth transition)
+    public HexadecimalAlphanumericModule(int Index, boolean halfClick, DyeColor color) {
         if (Index < 0 || Index > getDisplayTextureCharacterCount() + 3){
-            Index = 0;
             PowerGrid.LOGGER.warn("Index must be 0-" + (getDisplayTextureCharacterCount() + 3) + ", got: " + Index);
+            Index = 0;
         }
         this.Index = Index;
         this.halfClick = halfClick;
@@ -23,34 +23,39 @@ public class nineToZeroNumberModule implements IDisplayModule {
 
     @Override
     public IDisplayModule withIndex(int newIndex) {
-        return new nineToZeroNumberModule(newIndex, this.halfClick, this.color);
+        return new HexadecimalAlphanumericModule(newIndex, this.halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withHalfClick(boolean halfClick) {
-        return new nineToZeroNumberModule(this.Index, halfClick, this.color);
+        return new HexadecimalAlphanumericModule(this.Index, halfClick, this.color);
     }
 
     @Override
     public IDisplayModule withColor(DyeColor color) {
-        return new nineToZeroNumberModule(this.Index, this.halfClick, color);
+        return new HexadecimalAlphanumericModule(this.Index, this.halfClick, color);
+    }
+
+    @Override
+    public IDisplayModule withDamaged(int damaged) {
+        return null;
+    }
+
+    public float getDisplayTextureSize() {
+        return 112f;
+    }
+
+    public int getDisplayTextureCharacterCount() {
+        return 15;
     }
 
     @Override
     public ResourceLocation getDisplayTexture() {
-        return PowerGrid.texture("block/modular_display/ninetozero");
-    }
-
-    public float getDisplayTextureSize() {
-        return 80f;
-    }
-
-    public int getDisplayTextureCharacterCount() {
-        return 9;
+        return PowerGrid.texture("block/modular_display/zerotof");
     }
 
     public DisplayModuleType getDisplayModuleType() {
-        return DisplayModuleType.NINE_TO_ZERO;
+        return DisplayModuleType.HEXADECIMAL;
     }
 
     public boolean getHalfClick() {
@@ -59,7 +64,7 @@ public class nineToZeroNumberModule implements IDisplayModule {
 
     @Override
     public ModuleType getType() {
-        return ModuleType.DIGIT;
+        return ModuleType.ALPHANUMERIC;
     }
 
     @Override
@@ -72,10 +77,9 @@ public class nineToZeroNumberModule implements IDisplayModule {
         return color;
     }
 
-
     @Override
     public String serialize() {
-        return "ninetozero:" + Index + ":" + halfClick + ":" + color;
+        return "hexadecimal:" + Index + ":" + halfClick + ":" + color;
     }
 
 }

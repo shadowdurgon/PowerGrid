@@ -61,7 +61,7 @@ public class ModularDisplayBlockEntityRenderer extends SafeBlockEntityRenderer<M
 
                 if (slot.isEmpty()) continue;
 
-                if (slot.getModule().isDamaged()) continue;
+                //if (slot.getModule().isDamaged()) continue;
 
                 var halfClick = slot.getModule().getHalfClick();
 

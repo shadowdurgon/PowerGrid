@@ -3,7 +3,6 @@ package org.patryk3211.powergrid.electricity.modulardisplay;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -27,12 +26,11 @@ import org.patryk3211.powergrid.collections.ModdedItems;
 import org.patryk3211.powergrid.electricity.base.HorizontalElectricBlock;
 import org.patryk3211.powergrid.electricity.base.IDecoratedTerminal;
 import org.patryk3211.powergrid.electricity.base.TerminalBoundingBox;
-import org.patryk3211.powergrid.electricity.info.IHaveElectricProperties;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<ModularDisplayBlockEntity>, IHaveElectricProperties {
+public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<ModularDisplayBlockEntity> {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape NORTHSHAPE = Shapes.or(
@@ -57,10 +55,6 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
     @Override
     protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
-    }
-
-    @Override
-    public void appendProperties(ItemStack stack, Player player, List<Component> tooltip) {
     }
 
     @Override
@@ -92,7 +86,6 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
 
         if (level.isClientSide) return InteractionResult.SUCCESS;
 
-
         BlockEntity be = level.getBlockEntity(pos);
 
         if (player.getMainHandItem().getItem() instanceof DyeItem dye) {
@@ -114,9 +107,9 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         var be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
         int modulesToDrop = 0;
-        if(be instanceof ModularDisplayBlockEntity DisplayBE) {
+        if(be instanceof ModularDisplayBlockEntity displayBE) {
             for(int i = 0; i < ModularDisplayBlockEntity.SLOT_COUNT; i++) {
-                if(!DisplayBE.getSlot(i).isEmpty()){
+                if(!displayBE.getSlot(i).isEmpty()){
                     modulesToDrop += 1;
                 }
             }
@@ -129,6 +122,7 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
         return super.getDrops(state, params);
     }
 
+    //todo does this take the cake for most terminals on a block in the game?
     private static final TerminalBoundingBox[] NORTHTERMINALS = new TerminalBoundingBox[]{
 
             new TerminalBoundingBox(IDecoratedTerminal.CASE_GROUND, 8, 0, 13, 9, 2, 14).withColor(IDecoratedTerminal.BLUE),

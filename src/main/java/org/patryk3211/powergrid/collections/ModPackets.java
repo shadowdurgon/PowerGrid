@@ -25,6 +25,7 @@ public class ModPackets {
             .s2c(LightningSyncS2CPacket.class, LightningSyncS2CPacket::new)
             .s2c(EntityDataS2CPacket.class, EntityDataS2CPacket::new)
             .s2c(StateS2CPacket.class, StateS2CPacket::new)
+            .s2c(DisplayBurnoutS2CPacket.class, DisplayBurnoutS2CPacket::new)
             .s2c(UpdateComponentBiPacket.class, UpdateComponentBiPacket::new)
 
             .build();

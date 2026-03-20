@@ -1,0 +1,62 @@
+package org.patryk3211.powergrid.network.packets;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.Direction;
+import net.minecraft.client.Minecraft;
+import org.patryk3211.powergrid.collections.ModdedSoundEvents;
+import org.patryk3211.powergrid.electricity.modulardisplay.ModularDisplayBlock;
+import org.patryk3211.powergrid.electricity.particles.SparkParticleData;
+import org.patryk3211.powergrid.network.S2CPacket;
+
+public class DisplayBurnoutS2CPacket implements S2CPacket {
+
+    private final BlockPos pos;
+    private final int slotIndex;
+
+    public DisplayBurnoutS2CPacket(BlockPos pos, int slotIndex) {
+        this.pos = pos;
+        this.slotIndex = slotIndex;
+    }
+
+    public DisplayBurnoutS2CPacket(FriendlyByteBuf buf) {
+        this.pos = buf.readBlockPos();
+        this.slotIndex = buf.readInt();
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeBlockPos(pos);
+        buf.writeInt(slotIndex);
+    }
+
+    @Override
+    public void handle(Minecraft mc) {
+        var world = Minecraft.getInstance().level;
+        if (world == null) return;
+
+        int col = slotIndex % 4;
+        int row = slotIndex / 4;
+
+        float cellX = (col * 4 + 2) / 16f;
+        float cellY = ((3 - row) * 4 + 2) / 16f;
+
+        BlockState state = world.getBlockState(pos);
+        Direction facing = state.getValue(ModularDisplayBlock.HORIZONTAL_FACING);
+
+        float x, y, z;
+        y = pos.getY() + cellY;
+
+        switch (facing) {
+            case NORTH -> { x = pos.getX() + cellX;        z = pos.getZ(); }
+            case SOUTH -> { x = pos.getX() + (1 - cellX);  z = pos.getZ() + 1; }
+            case WEST  -> { x = pos.getX();                 z = pos.getZ() + (1 - cellX); }
+            case EAST  -> { x = pos.getX() + 1;             z = pos.getZ() + cellX; }
+            default    -> { x = pos.getX() + 0.5f;          z = pos.getZ() + 0.5f; }
+        }
+
+        SparkParticleData.explodeParticles(mc.level, x, y, z, facing, 10);
+        ModdedSoundEvents.COMPONENT_EXPLODE.playAt(mc.level, pos, 1.0f, mc.level.random.nextFloat() * 0.1f + 0.9f, true);
+    }
+}

@@ -32,9 +32,9 @@ import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 import org.patryk3211.powergrid.network.packets.UpdateComponentBiPacket;
 import org.patryk3211.powergrid.utility.CustomValueSettingsScreen;
 import org.patryk3211.powergrid.utility.Lang;
+import org.patryk3211.powergrid.utility.Unit;
 
 public class ModularDisplayComponent extends OrientableComponent implements IRenderedComponent, IInteractableComponent{
-    public static final FloatProperty THRESHOLD_VOLTAGE = new FloatProperty(PowerGrid.MOD_ID, "modular_display_threshold", 13, 1, 30);
     public static final IntProperty INDEX = new IntProperty(PowerGrid.MOD_ID, "modular_display_index", 1, 0, 30).hidden().cast();
     public static final BooleanProperty HALF_CLICK = new BooleanProperty(PowerGrid.MOD_ID, "modular_display_half_click").hidden().cast();
     public static final IntProperty CURRENT_MODULE = new IntProperty(PowerGrid.MOD_ID, "modular_display_module", 0, 0, 10).hidden().cast();
@@ -43,6 +43,8 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
     public static final FloatProperty CHARACTER_COUNT = new FloatProperty(PowerGrid.MOD_ID, "modular_display_character_count", 9, 0, 50).hidden().cast();
     public static final BooleanProperty WIRE_RESET = new BooleanProperty(PowerGrid.MOD_ID, "modular_display_reset").hidden().cast();
     public static final StringProperty CURRENT_COLOR = new StringProperty(PowerGrid.MOD_ID, "modular_display_current_color","WHITE").hidden().cast();
+    public static final ConstantProperty MIN_CURRENT = new ConstantProperty(PowerGrid.MOD_ID, "modular_display_current", Unit.CURRENT.formatWithPrefixes(.5f).component());
+    public static final ConstantProperty RESISTANCE = new ConstantProperty(PowerGrid.MOD_ID, "modular_display_resistance", Unit.RESISTANCE.formatWithPrefixes(25).component());
 
 
     private ValueSettingsBoard board = null;
@@ -114,7 +116,7 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
     @Override
     protected void addProperties(ImmutableCollection.Builder<ComponentProperty<?>> properties) {
         super.addProperties(properties);
-        properties.add(THRESHOLD_VOLTAGE, INDEX, HALF_CLICK, CURRENT_MODULE, DISPLAYED_TEXTURE, SPRITE_WIDTH,
+        properties.add(RESISTANCE, MIN_CURRENT, INDEX, HALF_CLICK, CURRENT_MODULE, DISPLAYED_TEXTURE, SPRITE_WIDTH,
                 CHARACTER_COUNT, WIRE_RESET, CURRENT_COLOR, power(25));
     }
 
@@ -193,9 +195,8 @@ public class ModularDisplayComponent extends OrientableComponent implements IRen
 
         thermals.builder()
                 .setThermalMass(0.15f)
-                .setMaxPower(25, 125f)
-                .addHeatSource(coilNodeToReset)
-                .addHeatSource(coilNodeToNegitive)
+                .setMaxPower(30, 125f)
+                .setDissipationFactor(.25f)
                 .addHeatSource(coil);
 
     }

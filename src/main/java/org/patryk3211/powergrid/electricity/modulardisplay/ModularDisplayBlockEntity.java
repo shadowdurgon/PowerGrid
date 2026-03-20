@@ -8,21 +8,24 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.patryk3211.powergrid.collections.ModdedItems;
+import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
 import org.patryk3211.powergrid.electricity.base.ElectricBlockEntity;
 import org.patryk3211.powergrid.electricity.base.ThermalBehaviour;
 import org.patryk3211.powergrid.electricity.modulardisplay.modules.*;
-import org.patryk3211.powergrid.electricity.particles.SparkParticleData;
 import org.patryk3211.powergrid.electricity.sim.AbstractElectricWire;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
+import org.patryk3211.powergrid.network.packets.DisplayBurnoutS2CPacket;
 import org.patryk3211.powergrid.utility.Lang;
 import java.util.List;
 
@@ -60,20 +63,17 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
                     this,
                     slot,
                     .15f,
-                    0.2f,
+                    0.1633f,
                     () -> {
-                        if (this.getLevel().isClientSide()){
-                            var random = this.getLevel().getRandom();
-                            var facing = this.getBlockState().getValue(ModularDisplayBlock.HORIZONTAL_FACING);
-                            var pos = DisplaySlotThermal.getSlotPosition(this.getBlockPos(), slot, facing);
-                            var x = (float) pos.x() + (random.nextFloat() - 0.5f) * 1 / 16f;
-                            var y = (float) pos.y() + (random.nextFloat() - 0.5f) * 1 / 16f;
-                            var z = (float) pos.z() + (random.nextFloat() - 0.5f) * 1 / 16f;
-                            SparkParticleData.explodeParticles(this.getLevel(), x, y, z, facing, 10);
-                            ModdedSoundEvents.COMPONENT_EXPLODE.playAt(this.getLevel(), pos, 1.0f, random.nextFloat() * 0.1f + 0.9f, true);
-                        }else {
-                            modules[slot] = null;
-                            markUpdated();
+                        modules[slot] = null;
+                        markUpdated();
+                        if (level instanceof ServerLevel serverLevel) {
+                            ModdedPackets.sendToClientsAround(
+                                    new DisplayBurnoutS2CPacket(worldPosition, slot),
+                                    serverLevel,
+                                    Vec3.atCenterOf(worldPosition),
+                                    64.0
+                            );
                         }
                     }
             );
@@ -85,14 +85,15 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
         DisplayModuleType type = DisplayModuleType.values()[value];
         var lastColor = modules[slot].getColor();
         switch (type) {
-            case ZERO_TO_NINE -> modules[slot] = new zeroToNineNumberModule(0, false, lastColor);
-            case NINE_TO_ZERO -> modules[slot] = new nineToZeroNumberModule(0, false, lastColor);
-            case ONE_TO_ZERO -> modules[slot] = new oneToZeroNumberModule(0, false, lastColor);
-            case HEXADECIMAL -> modules[slot] = new hexadecimalAlphanumericModule(0, false, lastColor);
-            case SYMBOLS -> modules[slot] = new symbolLetterModule(0, false, lastColor);
-            case ALPHABET -> modules[slot] = new alphabetLetterModule(0, false, lastColor);
+            case ZERO_TO_NINE -> modules[slot] = new ZeroToNineNumberModule(0, false, lastColor);
+            case NINE_TO_ZERO -> modules[slot] = new NineToZeroNumberModule(0, false, lastColor);
+            case ONE_TO_ZERO -> modules[slot] = new OneToZeroNumberModule(0, false, lastColor);
+            case HEXADECIMAL -> modules[slot] = new HexadecimalAlphanumericModule(0, false, lastColor);
+            case SYMBOLS -> modules[slot] = new SymbolLetterModule(0, false, lastColor);
+            case ALPHABET -> modules[slot] = new AlphabetLetterModule(0, false, lastColor);
         }
         markUpdated();
+        defaultSlotWires(slot);
     }
 
     public void syncBehaviourToSlot(int slot) {
@@ -118,6 +119,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
             }
             modules[slotIndex] = null;
             slotThermals[slotIndex].resetTemperature();
+            emptySlotWires(slotIndex);
             markUpdated();
             return true;
         }
@@ -133,11 +135,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
 
         modules[slotIndex] = heldModule;
         if (!player.isCreative()) held.shrink(1);
-        var negative = (SwitchedWire) wires[slotIndex * 3+1];
-        var reset = (SwitchedWire) wires[slotIndex * 3+2];
-        reset.setState(false);
-        negative.setState(true);
-
+        defaultSlotWires(slotIndex);
         markUpdated();
         return true;
     }
@@ -151,7 +149,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
     private IDisplayModule resolveModule(ItemStack stack) {
         if (stack.isEmpty()) return null;
         if (stack.is(ModdedItems.DISPLAY_MODULE.get())) {
-            return new zeroToNineNumberModule(0, false, DyeColor.WHITE);
+            return new ZeroToNineNumberModule(0, false, DyeColor.WHITE);
         }
         return null;
     }
@@ -162,6 +160,20 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
+    }
+
+    private void defaultSlotWires(int slotIndex) {
+        var negative = (SwitchedWire) wires[slotIndex * 3+1];
+        var reset = (SwitchedWire) wires[slotIndex * 3+2];
+        reset.setState(false);
+        negative.setState(true);
+    }
+
+    private void emptySlotWires(int slotIndex) {
+        var negative = (SwitchedWire) wires[slotIndex * 3+1];
+        var reset = (SwitchedWire) wires[slotIndex * 3+2];
+        reset.setState(false);
+        negative.setState(false);
     }
 
     @Override
@@ -189,6 +201,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
             ListTag slotList = tag.getList("slots", Tag.TAG_STRING);
             for (int i = 0; i < Math.min(slotList.size(), SLOT_COUNT); i++) {
                 modules[i] = DisplayModuleRegistry.deserialize(slotList.getString(i));
+                defaultSlotWires(i);
             }
         }
     }
@@ -221,8 +234,8 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
     @Override
     public void tick() {
         super.tick();
-        int w1 = 0, w2 = 1, w3 = 2;
         if(ThermalBehaviour.shouldOverheat()) {
+            int w1 = 0, w2 = 1, w3 = 2;
             for (int i = 0; i < SLOT_COUNT; i++) {
                 var slot = getSlot(i);
                 if (slot.isEmpty() || slotThermals[i] == null){
@@ -319,7 +332,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
             var coilNode = builder.addInternalNode();
 
             wires[w1] = builder.connect(25, builder.terminalNode(p), coilNode);
-            wires[w2] = builder.connectSwitch(0.1f, negative, coilNode, true);
+            wires[w2] = builder.connectSwitch(0.1f, negative, coilNode, false);
             wires[w3] = builder.connectSwitch(0.1f, builder.terminalNode(r), coilNode, false);
             p += 2; r += 2; w1 += 3; w2 += 3; w3 += 3;
         }
