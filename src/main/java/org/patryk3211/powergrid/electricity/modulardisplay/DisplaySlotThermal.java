@@ -100,10 +100,9 @@ public class DisplaySlotThermal extends BlockEntityBehaviour {
             }
 
             boolean crossedSmokeThreshold =
-                    (lastSyncedTemperature >= SMOKE_START_TEMPERATURE) !=
-                            (temperature >= SMOKE_START_TEMPERATURE);
+                    (lastSyncedTemperature >= SMOKE_START_TEMPERATURE) != (temperature >= SMOKE_START_TEMPERATURE);
 
-            //todo This might be better done using a SyncAppender however those are done
+            //todo This might be better done using a SyncAppender however those are done similar to lightbulbs
             if (crossedSmokeThreshold || Math.abs(temperature - lastSyncedTemperature) > 1f) {
                 lastSyncedTemperature = temperature;
                 blockEntity.sendData();

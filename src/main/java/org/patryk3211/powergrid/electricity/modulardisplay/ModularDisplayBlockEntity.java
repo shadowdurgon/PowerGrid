@@ -63,9 +63,10 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
                     this,
                     slot,
                     .15f,
-                    0.1633f,
+                    0.13f,
                     () -> {
                         modules[slot] = null;
+                        emptySlotWires(slot);
                         markUpdated();
                         if (level instanceof ServerLevel serverLevel) {
                             ModdedPackets.sendToClientsAround(
@@ -83,6 +84,7 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
 
     private void onSlotTypeChanged(int slot, int value) {
         DisplayModuleType type = DisplayModuleType.values()[value];
+        if (modules[slot] == null) return;
         var lastColor = modules[slot].getColor();
         switch (type) {
             case ZERO_TO_NINE -> modules[slot] = new ZeroToNineNumberModule(0, false, lastColor);
@@ -326,9 +328,6 @@ public class ModularDisplayBlockEntity extends ElectricBlockEntity{
         var negative = builder.terminalNode(0);
         int p = 1, r = 2, w1 = 0, w2 = 1, w3 = 2;
         for (int s = 0; s < SLOT_COUNT; s++) {
-
-            var positive = builder.terminalNode(p);
-            var reset = builder.terminalNode(r);
             var coilNode = builder.addInternalNode();
 
             wires[w1] = builder.connect(25, builder.terminalNode(p), coilNode);
