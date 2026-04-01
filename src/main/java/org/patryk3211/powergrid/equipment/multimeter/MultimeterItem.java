@@ -86,7 +86,7 @@ public class MultimeterItem extends Item implements IHaveElectricProperties {
                     if(hitLocalPos.y >= 2 / 16f && hitLocalPos.y <= 3 / 16f) {
                         int x = (int) (hitLocalPos.x * 16);
                         int y = (int) (hitLocalPos.z * 16);
-                        if(!be.getSchematic().getLayer(CircuitSchematic.Layer.FRONT, x, y))
+                        if(!be.getSchematic().hasTrace(CircuitSchematic.Layer.FRONT, x, y))
                             return InteractionResult.FAIL;
                         return onTerminal(context.getLevel(), new CircuitBoardEndpoint(pos, x, y), context.getItemInHand());
                     }
@@ -166,8 +166,7 @@ public class MultimeterItem extends Item implements IHaveElectricProperties {
                                         .style(ChatFormatting.GRAY)
                                         .component(), true);
                             // Wipe all data
-                            data.remove("ModeData");
-                            saveModeData(stack, data);
+                            deleteModeData(stack);
                         }
                     }
                 }
@@ -179,13 +178,8 @@ public class MultimeterItem extends Item implements IHaveElectricProperties {
                                     .style(ChatFormatting.GRAY)
                                     .component(), true);
                         // Wipe all data
-                        data.remove("ModeData");
+                        deleteModeData(stack);
                     }
-                }
-                if (data.isEmpty()) {
-                        stack.remove(DataComponents.CUSTOM_DATA);
-                } else {
-                    saveModeData(stack, data);
                 }
             }
         }
@@ -232,6 +226,14 @@ public class MultimeterItem extends Item implements IHaveElectricProperties {
         }
 
         return modeData;
+    }
+
+    public static void deleteModeData(ItemStack stack) {
+        CompoundTag root = stack
+                .getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
+                .copyTag();
+        root.remove("ModeData");
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
     }
 
     public static void saveModeData(ItemStack stack, CompoundTag modeData) {
