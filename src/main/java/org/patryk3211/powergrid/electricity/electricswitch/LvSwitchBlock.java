@@ -15,22 +15,39 @@
  */
 package org.patryk3211.powergrid.electricity.electricswitch;
 
+import com.simibubi.create.AllItems;
 import net.createmod.catnip.math.VoxelShaper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.patryk3211.powergrid.collections.ModdedBlocks;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
 import org.patryk3211.powergrid.electricity.base.IDecoratedTerminal;
 import org.patryk3211.powergrid.electricity.base.TerminalBoundingBox;
 import org.patryk3211.powergrid.electricity.base.terminals.BlockStateTerminalCollection;
+import org.patryk3211.powergrid.utility.Lang;
 
 public class LvSwitchBlock extends SurfaceSwitchBlock {
     private static final TerminalBoundingBox[] DOWN_TERMINALS = new TerminalBoundingBox[] {
             new TerminalBoundingBox(IDecoratedTerminal.CONNECTOR, 7, 0, 1, 9, 2, 3),
             new TerminalBoundingBox(IDecoratedTerminal.CONNECTOR, 7, 0, 13, 9, 2, 15)
     };
+    private int holdTime = 0;
 
     private static final VoxelShape SHAPE_DOWN = box(4, 0, 3, 12, 3, 13);
     private static final VoxelShape SHAPE_DOWN_2 = box(3, 0, 4, 13, 3, 12);
@@ -38,6 +55,7 @@ public class LvSwitchBlock extends SurfaceSwitchBlock {
     public LvSwitchBlock(Properties settings) {
         super(settings);
         this.maxVoltage = 320;
+        this.isSpDtMode = false;
 
         var shaper = VoxelShaper.forDirectional(SHAPE_DOWN, Direction.DOWN);
         var shaper2 = VoxelShaper.forDirectional(SHAPE_DOWN_2, Direction.DOWN);
@@ -68,7 +86,138 @@ public class LvSwitchBlock extends SurfaceSwitchBlock {
     }
 
     @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+
+        System.out.println(context.getClickedPos());
+        System.out.println(context.getClickLocation());
+        var pos = context.getClickedPos();
+        var clickedPos = context.getClickLocation();
+
+        switch(state.getValue(FACING)) {
+            case DOWN: break;
+            case UP: break;
+            case EAST: break;
+            case WEST: break;
+            case NORTH:
+                if(clickedPos.x > pos.getX() + .45 && clickedPos.x < pos.getX() + .55 &&
+                    clickedPos.y > pos.getY() + .35 && clickedPos.y < pos.getY() + .65) {
+                    return InteractionResult.sidedSuccess(true);
+                }
+                break;
+            case SOUTH: break;
+        };
+
+        return super.onWrenched(state, context);
+    }
+
+    @Override
     public void useSound(Level world, BlockPos pos, boolean open) {
         world.playSound(null, pos, ModdedSoundEvents.LV_SWITCH_CLICK.getMainEvent(), SoundSource.BLOCKS, 0.3F, open ? 0.65f : 0.75f);
+    }
+
+    public static Component wrenchText(Player player) {
+        if (player.getMainHandItem().getItem() != AllItems.WRENCH.asItem()) {
+            return null;
+        }
+
+        var world = player.level();
+
+        if (Minecraft.getInstance().hitResult instanceof BlockHitResult blockHit){
+            if (world.getBlockState(blockHit.getBlockPos()).getBlock() != ModdedBlocks.LV_SWITCH.get()) {
+                var temp = world.getBlockEntity(blockHit.getBlockPos());
+                return null;
+            }
+
+            var reach = player.isCreative() ? 5f : 4.5f;
+
+            Vec3 location = blockHit.getLocation();
+            var blockPos = blockHit.getBlockPos();
+            var blockEntity = world.getBlockEntity(blockPos);
+
+            if (blockEntity instanceof SwitchBlockEntity switchBlockEntity) {
+                var facing = switchBlockEntity.getBlockState().getValue(FACING);
+
+                if (blockHit.getDirection() != facing.getOpposite()){
+                    return null;
+                }
+
+                var along = switchBlockEntity.getBlockState().getValue(ALONG_FIRST_AXIS);
+                VoxelShape shape = world.getBlockState(blockPos).getShape(world, blockPos);
+                AABB aabb = null;
+                switch(facing) {
+                    case DOWN -> {
+                        if (along) {
+                            aabb = shape.bounds().move(blockPos).deflate((double) 4/16, (double) 3/16, (double) 2/16);
+                        } else {
+                            aabb = shape.bounds().move(blockPos).deflate((double) 3/16,(double) 4/16, (double) 2/16);
+                        }
+                    }
+                    case UP -> {
+                        if (along) {
+                            aabb = shape.bounds().move(blockPos).deflate((double) 4/16, (double) 3/16, (double) 2/16);
+                        } else {
+                            aabb = shape.bounds().move(blockPos).deflate((double) 3/16,(double) 4/16, (double) 2/16);
+                        }
+                    }
+                    case EAST, WEST, NORTH ,SOUTH -> {
+                        if (along) {
+                            aabb = shape.bounds().move(blockPos).deflate((double) 4/16, (double) 3/16, (double) 2/16);
+                        } else {
+                            aabb = shape.bounds().move(blockPos).deflate((double) 3/16,(double) 4/16, (double) 2/16);
+                        }
+                    }
+                }
+
+
+                if (along) {
+                    aabb = shape.bounds().move(blockPos).deflate((double) 4/16, (double) 3/16, (double) 2/16);
+                } else {
+                    aabb = shape.bounds().move(blockPos).deflate((double) 3/16,(double) 4/16, (double) 2/16);
+                }
+                //AABB aabb = new AABB(.45, .43, .85, .75, .69, .75); // .85 to .75 z   .45 to .75 x   .43 to .69 y
+                //aabb.move(blockPos);
+                var eyePos = player.getEyePosition(0f);
+                var lookVec = player.getViewVector(0f);
+                var endPos = eyePos.add(lookVec.scale(reach));
+
+                var hit = aabb.clip(eyePos, endPos);
+
+                if (hit.isPresent()){
+                    var voltage = Lang.text( "Hit");
+                    return Lang.translate("tooltip.multimeter.voltage")
+                            .add(voltage.style(ChatFormatting.BLUE))
+                            .style(ChatFormatting.GRAY)
+                            .component();
+                }
+            }
+        }
+
+//        var reach = player.isCreative() ? 5f : 4.5f;
+//        Vec3 location = player.pick(reach, 0, false).getLocation();
+//        var blockPos = BlockPos.containing(location);
+//        var blockEntity = world.getBlockEntity(blockPos);
+//        if (blockEntity instanceof SwitchBlockEntity switchBlockEntity) {
+//            var facing = switchBlockEntity.getBlockState().getValue(FACING);
+//            var along = switchBlockEntity.getBlockState().getValue(ALONG_FIRST_AXIS);
+//            VoxelShape shape = world.getBlockState(blockPos).getShape(world, blockPos);
+//            AABB aabb = shape.bounds().move(blockPos).deflate((double) 3/16,(double) 4/16, 0);
+//            //AABB aabb = new AABB(.45, .43, .85, .75, .69, .75); // .85 to .75 z   .45 to .75 x   .43 to .69 y
+//            //aabb.move(blockPos);
+//            var eyePos = player.getEyePosition(0f);
+//            var lookVec = player.getViewVector(0f);
+//            var endPos = eyePos.add(lookVec.scale(reach));
+//
+//            var hit = aabb.clip(eyePos, endPos);
+//
+//            if (hit.isPresent()){
+//                var voltage = Lang.text( "Hit");
+//                return Lang.translate("tooltip.multimeter.voltage")
+//                        .add(voltage.style(ChatFormatting.BLUE))
+//                        .style(ChatFormatting.GRAY)
+//                        .component();
+//            }
+//        }
+
+        return null;
     }
 }

@@ -50,6 +50,7 @@ public abstract class SwitchBlock extends ElectricBlock implements IBE<SwitchBlo
 
     protected float maxVoltage = 200f;
     protected boolean isButton = false;
+    protected boolean isSpDtMode = false;
 
     public SwitchBlock(Properties settings) {
         super(settings);
