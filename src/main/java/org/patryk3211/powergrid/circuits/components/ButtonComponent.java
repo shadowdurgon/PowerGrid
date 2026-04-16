@@ -24,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 import org.patryk3211.powergrid.PowerGrid;
 import org.patryk3211.powergrid.circuits.circuitboard.CircuitBoardBlockEntity;
 import org.patryk3211.powergrid.circuits.circuitboard.ComponentCircuitBuilder;
+import org.patryk3211.powergrid.circuits.components.properties.BooleanProperty;
 import org.patryk3211.powergrid.circuits.components.properties.ComponentProperty;
 import org.patryk3211.powergrid.circuits.components.properties.IntProperty;
 import org.patryk3211.powergrid.circuits.schematic.ComponentFootprint;
 import org.patryk3211.powergrid.circuits.schematic.PlacedComponent;
 import org.patryk3211.powergrid.circuits.thermal.ThermalBuilder;
 import org.patryk3211.powergrid.collections.ModdedSoundEvents;
+import org.patryk3211.powergrid.electricity.sim.AbstractElectricWire;
 import org.patryk3211.powergrid.electricity.sim.SwitchedWire;
 
 import java.util.Collection;
@@ -37,6 +39,7 @@ import java.util.List;
 
 public class ButtonComponent extends OrientableComponent implements IInteractableComponent, IGoggleLabel {
     public static final IntProperty STATE = (IntProperty) new IntProperty(PowerGrid.MOD_ID, "button_state", 0, 0, 10).hidden();
+    public static final BooleanProperty NC_MODE = new BooleanProperty(PowerGrid.MOD_ID, "button_mode");
 
     public ButtonComponent(ComponentFootprint footprint) {
         super(footprint);
@@ -45,12 +48,17 @@ public class ButtonComponent extends OrientableComponent implements IInteractabl
     @Override
     protected void addProperties(ImmutableCollection.Builder<ComponentProperty<?>> properties) {
         super.addProperties(properties);
-        properties.add(STATE, LABEL, current(16));
+        properties.add(STATE, LABEL, NC_MODE, current(16));
     }
 
     @Override
     public void bake(@NotNull PlacedComponent placed, @NotNull ComponentCircuitBuilder builder, ThermalBuilder.@NotNull IEmitter thermals) {
-        var wire = builder.connectSwitch(0.1f, builder.terminalNode(0), builder.terminalNode(1), false);
+        AbstractElectricWire wire;
+        if (placed.get(NC_MODE)){
+            wire = builder.connectSwitch(0.1f, builder.terminalNode(0), builder.terminalNode(1), true);
+        } else {
+            wire = builder.connectSwitch(0.1f, builder.terminalNode(0), builder.terminalNode(1), false);
+        }
         placed.add(wire);
         thermals.builder()
                 .setMaxCurrent(16, 0.1f, 150)
@@ -71,7 +79,11 @@ public class ButtonComponent extends OrientableComponent implements IInteractabl
         }
         if(!placed.wires.isEmpty()) {
             var wire = (SwitchedWire) placed.wires.get(0);
-            wire.setState(state != 0);
+            if (placed.get(NC_MODE)) {
+                wire.setState(state == 0);
+            } else {
+                wire.setState(state != 0);
+            }
         }
         return true;
     }

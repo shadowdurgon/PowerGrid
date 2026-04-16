@@ -114,6 +114,18 @@ public class Components {
             .item(ModdedBlocks.LV_SWITCH)
             .register();
 
+    public static final RegistryEntry<DPDTSwitchComponent> DPDT_SWITCH = REGISTRATE.component("dpdt_switch", DPDTSwitchComponent::new)
+            .footprint(5, 3, b -> b
+                    .addPadSharedText(1, 1, 0, "relay.cc", "relay.cc.short")
+                    .addPadSharedText(0, 0, 1, "relay.nc", "relay.nc.short")
+                    .addPadSharedText(0, 2, 2, "relay.no", "relay.no.short")
+                    .addPadSharedText(3, 1, 3, "relay.cc", "relay.cc.short")
+                    .addPadSharedText(4, 0, 4, "relay.nc", "relay.nc.short")
+                    .addPadSharedText(4, 2, 5, "relay.no", "relay.no.short")
+                    .withItem().withOutline())
+            .item(ModdedBlocks.LV_DPDT_SWITCH)
+            .register();
+
     public static final RegistryEntry<RelayComponent> RELAY = REGISTRATE.component("relay", RelayComponent::new)
             .footprint(4, 3, b -> b
                     .addPadSharedText(0, 0, 0, "relay.coil", null)

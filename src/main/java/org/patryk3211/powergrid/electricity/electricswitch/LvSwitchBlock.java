@@ -55,7 +55,6 @@ public class LvSwitchBlock extends SurfaceSwitchBlock {
     public LvSwitchBlock(Properties settings) {
         super(settings);
         this.maxVoltage = 320;
-        this.isSpDtMode = false;
 
         var shaper = VoxelShaper.forDirectional(SHAPE_DOWN, Direction.DOWN);
         var shaper2 = VoxelShaper.forDirectional(SHAPE_DOWN_2, Direction.DOWN);
@@ -88,24 +87,12 @@ public class LvSwitchBlock extends SurfaceSwitchBlock {
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
 
-        System.out.println(context.getClickedPos());
-        System.out.println(context.getClickLocation());
-        var pos = context.getClickedPos();
-        var clickedPos = context.getClickLocation();
+//        var hzFace = state.getValue(HORIZONTAL_FACING);
+//        var rotation = state.getValue(ROTATION);
+//
+//        System.
 
-        switch(state.getValue(FACING)) {
-            case DOWN: break;
-            case UP: break;
-            case EAST: break;
-            case WEST: break;
-            case NORTH:
-                if(clickedPos.x > pos.getX() + .45 && clickedPos.x < pos.getX() + .55 &&
-                    clickedPos.y > pos.getY() + .35 && clickedPos.y < pos.getY() + .65) {
-                    return InteractionResult.sidedSuccess(true);
-                }
-                break;
-            case SOUTH: break;
-        };
+        context.getClickedFace();
 
         return super.onWrenched(state, context);
     }

@@ -59,7 +59,7 @@ public class PlacementOverlay {
         overlayProviders.add(WirePreview::distanceOverlay);
         overlayProviders.add(TerminalHandler::overlayText);
         overlayProviders.add(ThermometerItemRenderer::overlayText);
-        overlayProviders.add(LvSwitchBlock::wrenchText);
+        //overlayProviders.add(LvSwitchBlock::wrenchText);
     }
 
     public static void setItemRequirement(Item item, int count, boolean hasItems) {

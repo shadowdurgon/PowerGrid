@@ -346,6 +346,18 @@ public class ModdedBlocks {
                 .build()
             .register();
 
+    public static final BlockEntry<LvSwitchDPDTBlock> LV_DPDT_SWITCH = REGISTRATE.block("lv_dpdt_switch", LvSwitchDPDTBlock::new)
+            .blockstate(surfaceSwitch("block/switches/lv_switch"))
+            .initialProperties(SharedProperties::wooden)
+            .transform(axeOrPickaxe())
+            .transform(CResistance.setResistance(0.15))
+            .transform(CThermal.maxPower(38.4, 0.5f))
+            .lang("LV DPDT Switch")
+            .item()
+            .model(itemWithParent("block/switches/lv_switch_off_v"))
+            .build()
+            .register();
+
     public static final BlockEntry<LvButtonBlock> LV_BUTTON = REGISTRATE.block("lv_button", LvButtonBlock::new)
             .blockstate(surfaceSwitch("block/switches/lv_button"))
             .initialProperties(SharedProperties::wooden)
