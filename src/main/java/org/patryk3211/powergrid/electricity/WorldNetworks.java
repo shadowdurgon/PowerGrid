@@ -331,14 +331,23 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
             // Synchronize state with clients
             if(syncTicks % 5 == 0) {
                 syncStates.clear();
-                for (var entry : trackers.entrySet()) {
-                    for (var player : entry.getValue()) {
+                var trackerEntryIter = trackers.entrySet().iterator();
+                while(trackerEntryIter.hasNext()) {
+                    var entry = trackerEntryIter.next();
+                    var playerIter = entry.getValue().iterator();
+                    while(playerIter.hasNext()) {
+                        var player = playerIter.next();
+                        if(player.isRemoved()) {
+                            playerIter.remove();
+                            continue;
+                        }
                         var endpoint = entry.getKey();
                         if(endpoint instanceof BlockWireEndpoint bwe) {
                             var eb = bwe.getElectricBehaviour(world);
                             if (eb == null)
                                 continue;
-                            var syncState = new SyncState(eb.getPos().distManhattan(player.blockPosition()) / 16 + 1);
+                            var ebPos = eb.getPos();
+                            var syncState = new SyncState((int) (Math.sqrt(player.distanceToSqr(ebPos.getX(), ebPos.getY(), ebPos.getZ())) / 24 + 1));
                             if(eb.blockEntity instanceof WindingBlockEntity winding) {
                                 winding.forSync(sync -> {
                                     if(sync == null)
@@ -352,17 +361,22 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
                             }
                         } else if(endpoint instanceof JunctionWireEndpoint je) {
                             var syncEntry = je.makeSyncEntry(world);
+                            var jePos = je.getExactPosition(world);
                             if(syncEntry != null)
                                 syncStates.computeIfAbsent(player, $ -> new HashMap<>())
-                                        .put(syncEntry, new SyncState((int) (je.getExactPosition(world).distanceTo(player.position()) / 16 + 1)));
+                                        .put(syncEntry, new SyncState((int) (Math.sqrt(player.distanceToSqr(jePos)) / 24 + 1)));
                         } else if(endpoint instanceof CircuitBoardEndpoint cbe) {
                             // Circuits might not have external terminals so they need a special tracking entry
                             var eb = cbe.getElectricBehaviour(world);
                             if (eb == null)
                                 continue;
+                            var ebPos = eb.getPos();
                             syncStates.computeIfAbsent(player, $ -> new HashMap<>())
-                                    .put(eb, new SyncState(eb.getPos().distManhattan(player.blockPosition()) / 16 + 1));
+                                    .put(eb, new SyncState((int) (Math.sqrt(player.distanceToSqr(ebPos.getX(), ebPos.getY(), ebPos.getZ())) / 24 + 1)));
                         }
+                    }
+                    if(entry.getValue().isEmpty()) {
+                        trackerEntryIter.remove();
                     }
                 }
             }
@@ -417,7 +431,8 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
         var rA = cSolver.solverAbsolutePrecision.get();
         var rR = cSolver.solverRelativePrecision.get();
         var rM = cSolver.solverAbsoluteMinimumPrecision.get();
-        network.setPrecision(rA, rR, rM);
+        var sA = cSolver.solverMaxSearchAlpha.get();
+        network.setPrecision(rA, rR, rM, sA);
         network.bjtSmoothAlpha = cSolver.bjtLimAlpha.getF();
         network.diodeSmoothAlpha = cSolver.diodeLimAlpha.getF();
         network.triodeLimCathode = cSolver.triodeLimCathode.getF();
@@ -766,8 +781,19 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
         return wires;
     }
 
+    public List<TransmissionLinePart> findConnectedWires(IWireEndpoint endpoint) {
+        var parts = partNodeMap.get(endpoint.getNode(world));
+        if(parts == null)
+            return null;
+        return List.copyOf(parts);
+    }
+
     public void deferredRewire(Collection<TransmissionLinePart> wires) {
         deferredRewireEntities.addAll(wires);
+    }
+
+    public void deferredRewire(TransmissionLinePart part) {
+        deferredRewireEntities.add(part);
     }
 
     @Override
@@ -841,6 +867,9 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
         Collection<TransmissionLinePart> parts = partNodeMap.get(globalExternalNodes.get(endpoint));
         if(parts == null)
             return false;
+        // Make sure endpoints are always up to date in line parts.
+        // TODO: Verify that this doesn't brake a bunch of things
+        addAndMigrateNode(endpoint);
         parts = List.copyOf(parts);
         boolean continueResolving = false;
         for(var part : parts) {
@@ -859,7 +888,6 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
                         return true;
                     }
                 } else if(part.getEndpoint2().equals(endpoint)) {
-//                    assert part.getEndpoint2().equals(endpoint);
                     // Check endpoint1
                     if(part.getEndpoint1().isValid(world)) {
                         // Resolve segment
@@ -879,7 +907,6 @@ public class WorldNetworks extends SavedData implements NetworkGraph.IGraphModif
                     continueResolving = true;
                 }
             } else if(part.getEndpoint2().equals(endpoint)) {
-//                assert part.getEndpoint2().equals(endpoint);
                 if(traceTree(part.getEndpoint1(), visited)) {
                     makeTransmissionLine(part);
                     continueResolving = true;

@@ -15,6 +15,7 @@
  */
 package org.patryk3211.powergrid.electricity.wire;
 
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.createmod.catnip.math.VecHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -30,6 +31,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import org.patryk3211.powergrid.collections.ModdedDataComponents;
 import org.patryk3211.powergrid.collections.ModdedPackets;
 import org.patryk3211.powergrid.network.packets.BlockWireAttachC2SPacket;
 import org.patryk3211.powergrid.network.packets.BlockWireCutC2SPacket;
@@ -91,7 +93,7 @@ public class ClientWireInteractions {
 
     private static Tuple<Integer, Integer> getSegment(BlockWireEntity entity, Vec3 hitPos) {
         var localPos = hitPos.subtract(entity.position());
-        var thickness = entity.getWireItem().getWireThickness();
+        var thickness = entity.getWireEntry().wireThickness();
         // Bounding boxes haven't been baked.
         if(entity.segments.size() != entity.boundingBoxes.size())
             return null;
@@ -150,8 +152,14 @@ public class ClientWireInteractions {
         if(target.getType() != HitResult.Type.ENTITY)
             return InteractionResult.FAIL;
         var stack = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
-        if(entity.getWireItem() != stack.getItem()) {
+        if(entity.getItem() != stack.getItem()) {
             mc.player.displayClientMessage(Lang.translate("message.connection_incorrect_wire_type").style(ChatFormatting.RED).component(), true);
+            return InteractionResult.FAIL;
+        }
+
+        var existingEndpoint = stack.getOrDefault(ModdedDataComponents.CONNECTION_DATA.get(), WireConnection.EMPTY).endpoint();
+        if(existingEndpoint != null && existingEndpoint.getSubLevel(mc.level) != SableCompanion.INSTANCE.getContaining(entity)) {
+            mc.player.displayClientMessage(Lang.translate("message.connection_failed").style(ChatFormatting.RED).component(), true);
             return InteractionResult.FAIL;
         }
 

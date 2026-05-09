@@ -15,6 +15,7 @@
  */
 package org.patryk3211.powergrid.electricity.light.string;
 
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.createmod.ponder.api.level.PonderLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -37,9 +38,8 @@ import org.patryk3211.powergrid.collections.ModdedEntities;
 import org.patryk3211.powergrid.electricity.GlobalElectricNetworks;
 import org.patryk3211.powergrid.electricity.WorldNetworks;
 import org.patryk3211.powergrid.electricity.sim.ElectricWire;
-import org.patryk3211.powergrid.electricity.wire.WireItem;
+import org.patryk3211.powergrid.electricity.wire.IWire;
 import org.patryk3211.powergrid.electricity.wire.powercord.CordEntity;
-import org.patryk3211.powergrid.electricity.wire.powercord.CordItem;
 import org.patryk3211.powergrid.electricity.wire.powercord.ICordEndpoint;
 
 public class StringLightCordEntity extends CordEntity {
@@ -61,10 +61,10 @@ public class StringLightCordEntity extends CordEntity {
     private int[] colorPattern;
 
     public static StringLightCordEntity create(Level world, ICordEndpoint endpoint1, ICordEndpoint endpoint2, ItemStack item, @Nullable Float resistance) {
-        if(!(item.getItem() instanceof CordItem))
+        if(!IWire.isCord(world, item.getItem()))
             throw new IllegalArgumentException("ItemStack must be of a CordItem");
         var entity = new StringLightCordEntity(ModdedEntities.STRING_LIGHT_CORD.get(), world);
-        entity.setItem((WireItem) item.getItem(), item.getCount());
+        entity.setItem(item.getItem(), item.getCount());
         var pattern = item.get(ModdedDataComponents.LIGHT_PATTERN.get());
         if(pattern != null){
             entity.colorPattern = new int[pattern.colors().length];
@@ -77,6 +77,14 @@ public class StringLightCordEntity extends CordEntity {
 
         entity.setEndpoint1(endpoint1);
         entity.setEndpoint2(endpoint2);
+
+        var tp1 = SableCompanion.INSTANCE.projectOutOfSubLevel(world, endpoint1.getExactPosition(world));
+        var tp2 = SableCompanion.INSTANCE.projectOutOfSubLevel(world, endpoint2.getExactPosition(world));
+        var dX = tp2.x - tp1.x;
+        var dY = tp2.y - tp1.y;
+        var dZ = tp2.z - tp1.z;
+        var hL = dX * dX + dZ * dZ;
+        entity.placedLength = (float) Math.sqrt(entity.getWireEntry().horizontalCoefficient() * hL + entity.getWireEntry().verticalCoefficient() * dY * dY);
 
         entity.refreshTerminalPositions();
         entity.setXRot(0);

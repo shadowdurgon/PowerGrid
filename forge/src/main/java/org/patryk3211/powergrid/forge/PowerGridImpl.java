@@ -57,14 +57,16 @@ import org.patryk3211.powergrid.circuits.components.ComponentRegistry;
 import org.patryk3211.powergrid.circuits.components.forge.ComponentRegistryImpl;
 import org.patryk3211.powergrid.collections.*;
 import org.patryk3211.powergrid.collections.forge.ModdedSoundEventsImpl;
-import org.patryk3211.powergrid.network.CustomPayloadWrapper;
 import org.patryk3211.powergrid.commands.PerformanceCommand;
 import org.patryk3211.powergrid.compat.tfmg.TFMGBridge;
 import org.patryk3211.powergrid.compat.tfmg.TFMGProxyImpl;
 import org.patryk3211.powergrid.data.BlockTagProvider;
+import org.patryk3211.powergrid.data.EntityTagProvider;
 import org.patryk3211.powergrid.data.ItemTagProvider;
 import org.patryk3211.powergrid.data.recipe.forge.MixingRecipes;
 import org.patryk3211.powergrid.data.recipes.*;
+import org.patryk3211.powergrid.electricity.wire.registry.WireItemEntry;
+import org.patryk3211.powergrid.electricity.wire.registry.WireRegistry;
 import org.patryk3211.powergrid.kinetics.punchcard.PunchCardMenu;
 import org.patryk3211.powergrid.kinetics.punchcard.PunchCardReaderBlockEntity;
 import org.patryk3211.powergrid.kinetics.punchcard.forge.PunchCardMenuImpl;
@@ -129,6 +131,7 @@ public class PowerGridImpl {
     @SubscribeEvent
     public static void newDynamicRegistryEvent(DataPackRegistryEvent.NewRegistry event) {
         event.dataPackRegistry(ComponentRegistry.ITEM_REGISTRY_KEY, ComponentRegistry.ITEM_CODEC, ComponentRegistry.ITEM_CODEC);
+        event.dataPackRegistry(WireRegistry.KEY, WireItemEntry.CODEC, WireItemEntry.CODEC);
     }
 
     @SubscribeEvent
@@ -193,11 +196,24 @@ public class PowerGridImpl {
                 ModdedBlockEntities.WINDING,
                 ModdedBlockEntities.TRANSFORMER_MEDIUM,
                 ModdedBlockEntities.HV_SWITCH,
-                ModdedBlockEntities.DEVICE_CONNECTOR
+                ModdedBlockEntities.DEVICE_CONNECTOR,
+                ModdedBlockEntities.MULTIBLOCK_BATTERY,
+                ModdedBlockEntities.CARBON_PILE,
+                ModdedBlockEntities.CARBON_PILE_COIL
         );
         forbiddenBlockEntities.stream()
                 .map(entry -> entry.getId().toString())
                 .forEach(id -> InterModComms.sendTo("carryon", "blacklistBlock", () -> id));
+        var forbiddenEntities = List.of(
+                ModdedEntities.BLOCK_WIRE,
+                ModdedEntities.HANGING_WIRE,
+                ModdedEntities.CORD_ENTITY,
+                ModdedEntities.STRING_LIGHT_CORD,
+                ModdedEntities.ZAP_PROJECTILE
+        );
+        forbiddenEntities.stream()
+                .map(entry -> entry.getId().toString())
+                .forEach(id -> InterModComms.sendTo("carryon", "blacklistEntity", () -> id));
     }
 
     @SubscribeEvent
@@ -238,6 +254,7 @@ public class PowerGridImpl {
 
         generator.addProvider(true, (DataProvider.Factory<BlockTagProvider>) (PackOutput o) -> new BlockTagProvider(o, registries));
         generator.addProvider(true, (DataProvider.Factory<ItemTagProvider>) (PackOutput o) -> new ItemTagProvider(o, registries));
+        generator.addProvider(true, (DataProvider.Factory<EntityTagProvider>) (PackOutput o) -> new EntityTagProvider(o, registries));
         generator.addProvider(true, ModdedSoundEvents.provider(output));
     }
 
@@ -262,6 +279,7 @@ public class PowerGridImpl {
 
     public static AbstractPowerGridRegistrate createRegistrate() {
         AbstractPowerGridRegistrate.COMPONENT_ITEMS = ProviderType.register("component_items", ComponentItemEntryProviderImpl::new);
+        AbstractPowerGridRegistrate.WIRE_ITEMS = ProviderType.register("wire_types", WireItemEntryProviderImpl::new);
         return ForgePowerGridRegistrate.create(PowerGrid.MOD_ID)
                 .defaultCreativeTab((net.minecraft.resources.ResourceKey<CreativeModeTab>) null)
                 .setTooltipModifierFactory(item ->

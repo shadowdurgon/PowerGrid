@@ -18,7 +18,9 @@ package org.patryk3211.powergrid.electricity.wire;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.AllSpecialTextures;
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.createmod.catnip.animation.AnimationTickHolder;
+import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.outliner.Outliner;
 import net.createmod.catnip.render.SuperRenderTypeBuffer;
 import net.createmod.catnip.theme.Color;
@@ -36,58 +38,67 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 import org.patryk3211.powergrid.collections.ModdedDataComponents;
 import org.patryk3211.powergrid.collections.ModdedRenderLayers;
 import org.patryk3211.powergrid.electricity.base.IElectric;
 import org.patryk3211.powergrid.electricity.base.ITerminalPlacement;
-import org.patryk3211.powergrid.electricity.wire.powercord.CordItem;
 import org.patryk3211.powergrid.electricity.wire.powercord.CordRenderer;
 import org.patryk3211.powergrid.electricity.wire.powercord.ICordEndpoint;
+import org.patryk3211.powergrid.electricity.wire.registry.WireItemEntry;
+import org.patryk3211.powergrid.electricity.wire.registry.WireRegistry;
 import org.patryk3211.powergrid.utility.BlockTrace;
 import org.patryk3211.powergrid.utility.Lang;
 import org.patryk3211.powergrid.utility.PlacementOverlay;
+import org.patryk3211.powergrid.compat.sable.SableUtils;
 
 @Environment(EnvType.CLIENT)
 public class WirePreview {
     private static final boolean DEBUG_BLOCK_TRACING = false;
     public static final Object outlineSlot = new Object();
 
+    private static int renderPath = 0;
+    private static ICordEndpoint renderedCordEndpoint;
+    private static WireItemEntry renderedItem;
+    private static Pair<BlockTrace.TraceState, BlockTrace.TraceResult> renderedTrace;
+    private static Vec3 renderedPos1, renderedPos2;
+    private static int renderedColor;
+
     @Nullable
     public static ItemStack getUsedWireStack(Player player) {
         var stack1 = player.getMainHandItem();
         var stack2 = player.getOffhandItem();
-        if(stack1 != null && stack1.getItem() instanceof IWire && stack1.has(ModdedDataComponents.CONNECTION_DATA.get())) {
+        if(stack1 != null && IWire.isWire(player.level(), stack1.getItem()) && stack1.has(ModdedDataComponents.CONNECTION_DATA.get())) {
             return stack1;
-        } else if(stack2 != null && stack2.getItem() instanceof IWire && stack2.has(ModdedDataComponents.CONNECTION_DATA.get())) {
+        } else if(stack2 != null && IWire.isWire(player.level(), stack2.getItem()) && stack2.has(ModdedDataComponents.CONNECTION_DATA.get())) {
             return stack2;
         } else {
             return null;
         }
     }
 
-    private static void renderCord(SuperRenderTypeBuffer buffer, PoseStack matrixStack, ClientLevel world, LocalPlayer player, HitResult target, ItemStack wireStack) {
-        var endpoint = wireStack.getOrDefault(ModdedDataComponents.CONNECTION_DATA.get(), WireConnection.EMPTY).endpoint();
-        if(!(endpoint instanceof ICordEndpoint cordEndpoint))
-            return;
-        CordRenderer.renderPreview(cordEndpoint, player.getRopeHoldPosition(AnimationTickHolder.getPartialTicks()),
-                matrixStack, buffer, world, (CordItem) wireStack.getItem(), 0xFF413C31);
-    }
-
-    public static void render(SuperRenderTypeBuffer buffer, PoseStack matrixStack, ClientLevel world, LocalPlayer player, HitResult target) {
+    public static void tick() {
+        renderPath = 0;
+        var player = Minecraft.getInstance().player;
         ItemStack wireStack = getUsedWireStack(player);
         if(wireStack == null)
             return;
-        if(!(wireStack.getItem() instanceof WireItem wireItem))
+        if(!IWire.isWire(player.level(), wireStack.getItem()))
             return;
-        if(wireStack.getItem() instanceof CordItem) {
-            renderCord(buffer, matrixStack, world, player, target, wireStack);
+        renderedItem = WireRegistry.forItem(player.level(), wireStack.getItem());
+        if(IWire.isCord(player.level(), wireStack.getItem())) {
+            var endpoint = wireStack.getOrDefault(ModdedDataComponents.CONNECTION_DATA.get(), WireConnection.EMPTY).endpoint();
+            if(!(endpoint instanceof ICordEndpoint cordEndpoint))
+                return;
+            renderedCordEndpoint = cordEndpoint;
+            renderPath = 3;
             return;
         }
+        var target = Minecraft.getInstance().hitResult;
+        if(target == null)
+            return;
         if(target.getType() != HitResult.Type.BLOCK) {
             if(target.getType() == HitResult.Type.ENTITY) {
                 var entityHit = (EntityHitResult) target;
@@ -103,9 +114,7 @@ public class WirePreview {
         if(endpoint == null)
             return;
 
-        var consumer = buffer.getBuffer(RenderType.entityTranslucent(wireItem.getWireTexture()));
-        float thickness = wireItem.getWireThickness();
-
+        var world = Minecraft.getInstance().level;
         var currentPos = endpoint.getExactPosition(world);
         Direction continueDir = null;
         if(endpoint instanceof BlockWireEntityEndpoint bwe) {
@@ -144,58 +153,103 @@ public class WirePreview {
             }
         }
 
-        float length = (float) currentPos.distanceTo(hitPoint);
+        var projCurrentPos = SableCompanion.INSTANCE.projectOutOfSubLevel(world, currentPos);
+        var projHitPos = SableCompanion.INSTANCE.projectOutOfSubLevel(world, hitPoint);
+        float length = (float) projCurrentPos.distanceTo(projHitPos);
         // Stop rendering the preview above a thousand blocks to stop the game from freezing
         if(length > 1000)
             return;
         boolean isBlockWire = endpoint.type() != WireEndpointType.BLOCK;
         if(isBlockWire || hitTerminal == null) {
+            if(!SableUtils.sameSubLevel(world, currentPos, hitPoint))
+                return;
             length = 0;
             currentPos = BlockTrace.alignPosition(currentPos);
-            var output = BlockTrace.findPathWithState(world, currentPos, hitPoint, hitTerminal, continueDir);
-            if(output != null) {
-                if(DEBUG_BLOCK_TRACING) {
-                    var lineBuffer = buffer.getBuffer(ModdedRenderLayers.getDebugLines());
-                    var state = output.getFirst();
-                    for (var cell : state.states.values()) {
-                        if (cell.backtrace == null)
-                            continue;
-                        int color = 0xFFFF0000;
-                        if(!cell.isSupported())
-                            color |= 0xFF00;
-                        if(!cell.backtrace.isSupported())
-                            color |= 0xFF;
-                        BlockWireRenderer.debugLine(matrixStack, lineBuffer, LightTexture.FULL_BRIGHT, color, state.transform(cell.position), state.transform(cell.backtrace.position));
-                    }
-                }
-                var points = output.getSecond();
+            renderedPos1 = projCurrentPos;
+            renderedPos2 = currentPos;
+            renderedTrace = BlockTrace.findPathWithState(world, currentPos, hitPoint, hitTerminal, continueDir);
+            if(renderedTrace != null) {
+                renderPath = 2;
+                var points = renderedTrace.getSecond();
                 if(points != null) {
                     for(var p : points.points()) {
-                        var nextPos = currentPos.add(p.vector());
-                        int color = points.reachedTarget() ? 0x80AAFFAA : 0x80FFAAAA;
-                        BlockWireRenderer.renderSegment(matrixStack, consumer, LightTexture.FULL_BRIGHT, color, currentPos, p.direction, thickness, p.length(), 0);
-                        currentPos = nextPos;
                         length += p.length();
                     }
                 }
             }
         } else {
-            var color = length < wireItem.getMaximumLength() ? 0x80AAFFAA : 0x80FFAAAA;
-            HangingWireRenderer.renderFromPositions(matrixStack, consumer, currentPos, hitPoint, 1.01, 1.2, thickness, LightTexture.FULL_BRIGHT, color);
+            renderedColor = length < renderedItem.maximumLength() ? 0x80AAFFAA : 0x80FFAAAA;
+            renderedPos1 = projCurrentPos;
+            renderedPos2 = projHitPos;
+            renderPath = 1;
         }
 
         if(!player.isCreative()) {
-            int requiredItemCount = Math.max(Math.round(length * wireItem.getItemUseMultiplier()), 1);
+            int requiredItemCount = Math.max(Math.round(length * renderedItem.itemsPerMeter()), 1);
             PlacementOverlay.setItemRequirement(wireStack.getItem(), requiredItemCount, wireStack.getCount() >= requiredItemCount);
         }
+    }
+
+    public static void render(SuperRenderTypeBuffer buffer, PoseStack matrixStack, ClientLevel world, LocalPlayer player, Vec3 cameraPos) {
+        matrixStack.pushPose();
+        switch(renderPath) {
+            case 1 -> {
+                matrixStack.translate(renderedPos1.x - cameraPos.x, renderedPos1.y - cameraPos.y, renderedPos1.z - cameraPos.z);
+                float thickness = renderedItem.wireThickness();
+                var consumer = buffer.getBuffer(RenderType.entityTranslucent(renderedItem.texture()));
+                HangingWireRenderer.renderFromPositions(matrixStack, consumer, Vec3.ZERO, renderedPos2.subtract(renderedPos1), 1.01, 1.2, thickness, LightTexture.FULL_BRIGHT, renderedColor);
+            }
+            case 2 -> {
+                if(renderedTrace != null) {
+                    if(DEBUG_BLOCK_TRACING) {
+                        var lineBuffer = buffer.getBuffer(ModdedRenderLayers.getDebugLines());
+                        var state = renderedTrace.getFirst();
+                        for (var cell : state.states.values()) {
+                            if (cell.backtrace == null)
+                                continue;
+                            int color = 0xFFFF0000;
+                            if(!cell.isSupported())
+                                color |= 0xFF00;
+                            if(!cell.backtrace.isSupported())
+                                color |= 0xFF;
+                            BlockWireRenderer.debugLine(matrixStack, lineBuffer, LightTexture.FULL_BRIGHT, color, state.transform(cell.position), state.transform(cell.backtrace.position));
+                        }
+                    }
+                    var sublevel = SableCompanion.INSTANCE.getContainingClient(renderedPos2);
+                    matrixStack.translate(renderedPos1.x - cameraPos.x, renderedPos1.y - cameraPos.y, renderedPos1.z - cameraPos.z);
+                    if(sublevel != null) {
+                        var pose = sublevel.renderPose(AnimationTickHolder.getPartialTicks());
+                        matrixStack.rotateAround(new Quaternionf(pose.orientation()), 0, 0, 0);
+                    }
+                    var currentPos = Vec3.ZERO;
+                    var points = renderedTrace.getSecond();
+                    float thickness = renderedItem.wireThickness();
+                    var consumer = buffer.getBuffer(RenderType.entityTranslucent(renderedItem.texture()));
+                    if(points != null) {
+                        for(var p : points.points()) {
+                            var nextPos = currentPos.add(p.vector());
+                            int color = points.reachedTarget() ? 0x80AAFFAA : 0x80FFAAAA;
+                            BlockWireRenderer.renderSegment(matrixStack, consumer, LightTexture.FULL_BRIGHT, color, currentPos, p.direction, thickness, p.length(), 0);
+                            currentPos = nextPos;
+                        }
+                    }
+                }
+            }
+            case 3 -> {
+                CordRenderer.renderPreview(renderedCordEndpoint, player.getRopeHoldPosition(AnimationTickHolder.getPartialTicks()),
+                        matrixStack, buffer, world, renderedItem, 0xFF413C31, cameraPos);
+            }
+        }
+        matrixStack.popPose();
     }
 
     public static Component distanceOverlay(Player player) {
         ItemStack wireStack = getUsedWireStack(player);
         if(wireStack == null)
             return null;
-        if(!(wireStack.getItem() instanceof WireItem wire))
+        if(!IWire.isWire(player.level(), wireStack.getItem()))
             return null;
+        var wireEntry = WireRegistry.forItem(player.level(), wireStack.getItem());
 
         var endpoint = wireStack.getOrDefault(ModdedDataComponents.CONNECTION_DATA.get(), WireConnection.EMPTY).endpoint();
         if(endpoint == null)
@@ -206,9 +260,9 @@ public class WirePreview {
         if(target == null || target.getType() != HitResult.Type.BLOCK)
             return null;
         var hitPoint = target.getLocation();
-        var distance = hitPoint.distanceTo(currentPos);
+        var distance = SableUtils.projectedDistance(player.level(), currentPos, hitPoint);
         var msg = Lang.translate("gui.endpoint_distance")
-                .add(Lang.numberConstant(distance).style(distance < wire.getMaximumLength() ? ChatFormatting.GREEN : ChatFormatting.RED))
+                .add(Lang.numberConstant(distance).style(distance < wireEntry.maximumLength() ? ChatFormatting.GREEN : ChatFormatting.RED))
                 .style(ChatFormatting.WHITE);
         if(!endpoint.isValid(player.level())) {
             msg.add(Component.literal(" "))
@@ -218,7 +272,6 @@ public class WirePreview {
         }
 
         return msg.component();
-
     }
 
     public static void notifyOfBlock(BlockPos pos) {

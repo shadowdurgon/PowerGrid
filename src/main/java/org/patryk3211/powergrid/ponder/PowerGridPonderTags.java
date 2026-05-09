@@ -131,7 +131,10 @@ public class PowerGridPonderTags {
                 .add(ModdedBlocks.VOLTAGE_METER)
                 .add(ModdedBlocks.CURRENT_METER)
                 .add(ModdedItems.VARISTOR)
-                .add(ModdedItems.DISPLAY_MODULE);
+                .add(ModdedItems.DISPLAY_MODULE)
+                .add(ModdedItems.VFET)
+                .add(ModdedItems.BJT_NPN)
+                .add(ModdedItems.BJT_PNP);
 
         HELPER.addToTag(AllCreatePonderTags.KINETIC_APPLIANCES)
                 .add(ModdedBlocks.GENERATOR_CLUTCH)

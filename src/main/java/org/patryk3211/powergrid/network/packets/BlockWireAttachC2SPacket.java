@@ -15,6 +15,7 @@
  */
 package org.patryk3211.powergrid.network.packets;
 
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -55,7 +56,7 @@ public class BlockWireAttachC2SPacket implements C2SPacket {
             return;
         }
         var stack = player.getItemInHand(InteractionHand.MAIN_HAND);
-        if(!(stack.getItem() instanceof WireItem)) {
+        if(!IWire.isWire(player.level(), stack.getItem())) {
             PowerGrid.LOGGER.error("Received wire attach packet for player whose not holding a wire");
             return;
         }
@@ -72,6 +73,8 @@ public class BlockWireAttachC2SPacket implements C2SPacket {
         }
 
         var existingEndpoint = stack.getOrDefault(ModdedDataComponents.CONNECTION_DATA.get(), WireConnection.EMPTY).endpoint();
+        if(existingEndpoint != null && existingEndpoint.getSubLevel(player.level()) != SableCompanion.INSTANCE.getContaining(entity))
+            return;
 
         IWireEndpoint endpoint;
         if(gridPoint <= 1 && index == 0) {

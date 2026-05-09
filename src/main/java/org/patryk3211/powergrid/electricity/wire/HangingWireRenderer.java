@@ -17,6 +17,7 @@ package org.patryk3211.powergrid.electricity.wire;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -46,19 +47,37 @@ public class HangingWireRenderer extends EntityRenderer<HangingWireEntity> {
     @NotNull
     @Override
     public ResourceLocation getTextureLocation(HangingWireEntity entity) {
-        return entity.getWireItem().getWireTexture();
+        return entity.getWireEntry().texture();
+    }
+
+    public static int lodLevel(Vec3 playerPos, Vec3 offset, Vec3... wirePositions) {
+        if(!ModdedConfigs.client().wireLOD.get())
+            return 0;
+        double minDist = Double.POSITIVE_INFINITY;
+        for(var pos : wirePositions) {
+            double dx = playerPos.x - (pos.x - offset.x);
+            double dy = playerPos.y - (pos.y - offset.y);
+            double dz = playerPos.z - (pos.z - offset.z);
+            double dist = dx * dx + dy * dy * dz * dz;
+            if(dist < minDist)
+                minDist = dist;
+        }
+        if(minDist > 64 * 64)
+            return 2;
+        if(minDist > 32 * 32)
+            return 1;
+        return 0;
     }
 
     @Override
     public void render(HangingWireEntity entity, float yaw, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light) {
-        if(entity.renderParams == null)
+        if(entity.curveParams == null)
             return;
 
         if(entity.isOverheated())
             // Don't render since it's dead and only there to spawn particles.
             return;
-        assert entity.renderParams instanceof CurveParameters;
-        CurveParameters rp = (CurveParameters) entity.renderParams;
+        CurveParameters rp = entity.curveParams;
 
         // To introduce some subtle variety into the wires.
         var thicknessOffset = entity.getId() / 16f;
@@ -71,22 +90,21 @@ public class HangingWireRenderer extends EntityRenderer<HangingWireEntity> {
             }
         }
 
-        var pos = entity.position();
+        var rawPos = entity.position();
+        var pos = SableCompanion.INSTANCE.projectOutOfSubLevel(entity.level(), rawPos);
+        final var playerPos = ModdedConfigs.client().wireLOD.get() ? Minecraft.getInstance().player.position() : null;
         float segmentSize = 0.5f;
-        boolean simpleModel;
-        if(ModdedConfigs.client().wireLOD.get()) {
-            var playerPos = Minecraft.getInstance().player.position();
-            if (playerPos.distanceToSqr(pos) > 64 * 64) {
-                segmentSize = 3.0f;
-                simpleModel = true;
-            } else if (playerPos.distanceToSqr(pos) > 32 * 32) {
+        final boolean simpleModel;
+        switch(lodLevel(playerPos, rawPos.subtract(pos), rawPos, entity.terminalPos1, entity.terminalPos2)) {
+            case 1 -> {
                 segmentSize = 1.5f;
                 simpleModel = !Minecraft.useFancyGraphics();
-            } else {
-                simpleModel = !Minecraft.useFancyGraphics();
             }
-        } else {
-            simpleModel = !Minecraft.useFancyGraphics();
+            case 2 -> {
+                segmentSize = 3.0f;
+                simpleModel = true;
+            }
+            default -> simpleModel = !Minecraft.useFancyGraphics();
         }
         VertexConsumer buffer;
         if(!simpleModel) {
@@ -94,7 +112,26 @@ public class HangingWireRenderer extends EntityRenderer<HangingWireEntity> {
         } else {
             buffer = vertexConsumers.getBuffer(RenderType.entityCutoutNoCull(getTextureLocation(entity)));
         }
+
         var world = entity.level();
+        if(entity.baseTerminalPos1 != null && entity.baseTerminalPos2 != null) {
+            // Change curve based on sublevels
+            boolean moved = false;
+            Vec3 pos1 = entity.terminalPos1, pos2 = entity.terminalPos2;
+            var s1 = SableCompanion.INSTANCE.getContainingClient(entity.baseTerminalPos1);
+            var s2 = SableCompanion.INSTANCE.getContainingClient(entity.baseTerminalPos2);
+            if (s1 != null) {
+                pos1 = s1.renderPose(tickDelta).transformPosition(entity.baseTerminalPos1);
+                moved = true;
+            }
+            if (s2 != null) {
+                pos2 = s2.renderPose(tickDelta).transformPosition(entity.baseTerminalPos2);
+                moved = true;
+            }
+            if (moved) {
+                rp.nudge(pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z);
+            }
+        }
         rp.runForSegments((x1, y1, z1, x2, y2, z2, offset, length) -> {
             var blockPos = BlockPos.containing((x1 + x2) * 0.5 + pos.x, (y1 + y2) * 0.5 + pos.y, (z1 + z2) * 0.5 + pos.z);
             var sky = world.getBrightness(LightLayer.SKY, blockPos);
@@ -103,28 +140,36 @@ public class HangingWireRenderer extends EntityRenderer<HangingWireEntity> {
                     x1, y1, z1,
                     x2, y2, z2,
                     rp.cross1, rp.cross2, LightTexture.pack(block, sky), color,
-                    rp.thickness, thicknessOffset, length, offset, simpleModel);
+                    rp.thickness, thicknessOffset, (float) length, (float) offset, simpleModel);
         }, segmentSize);
     }
 
     public static void renderFromPositions(PoseStack matrices, VertexConsumer buffer, Vec3 t1, Vec3 t2, double horizontalCoefficient, double verticalCoefficient, double thickness, int light, int color) {
-        float x = (float) (t1.x + t2.x) * 0.5f;
-        float y = (float) t1.y;
-        float z = (float) (t1.z + t2.z) * 0.5f;
-        var curve = new CurveParameters(t1, t2, horizontalCoefficient, verticalCoefficient, thickness);
+        double x = (t1.x + t2.x) * 0.5;
+        double y = t1.y;
+        double z = (t1.z + t2.z) * 0.5;
+        var dX = t2.x - t1.x;
+        var dY = t2.y - t1.y;
+        var dZ = t2.z - t1.z;
+        var hL = dX * dX + dZ * dZ;
+        var curve = new CurveParameters(t1, t2, Math.sqrt(horizontalCoefficient * hL + verticalCoefficient * dY * dY), thickness);
         curve.runForSegments((x1, y1, z1, x2, y2, z2, offset, length) ->
                 renderSegment(matrices, buffer,
                         x1 + x, y1 + y, z1 + z,
                         x2 + x, y2 + y, z2 + z,
                         curve.cross1, curve.cross2, light, color,
-                        curve.thickness, 0, length, offset, !Minecraft.useFancyGraphics()), 0.5f);
+                        curve.thickness, 0, (float) length, (float) offset, !Minecraft.useFancyGraphics()), 0.5f);
     }
 
     public static void renderFromPositions(PoseStack matrices, VertexConsumer buffer, Vec3 t1, Vec3 t2, double horizontalCoefficient, double verticalCoefficient, double thickness, BlockAndTintGetter lightProvider, int color) {
-        float x = (float) (t1.x + t2.x) * 0.5f;
-        float y = (float) t1.y;
-        float z = (float) (t1.z + t2.z) * 0.5f;
-        var curve = new CurveParameters(t1, t2, horizontalCoefficient, verticalCoefficient, thickness);
+        double x = (t1.x + t2.x) * 0.5;
+        double y = t1.y;
+        double z = (t1.z + t2.z) * 0.5;
+        var dX = t2.x - t1.x;
+        var dY = t2.y - t1.y;
+        var dZ = t2.z - t1.z;
+        var hL = dX * dX + dZ * dZ;
+        var curve = new CurveParameters(t1, t2, Math.sqrt(horizontalCoefficient * hL + verticalCoefficient * dY * dY), thickness);
         curve.runForSegments((x1, y1, z1, x2, y2, z2, offset, length) -> {
                 var blockPos = BlockPos.containing((x1 + x2) * 0.5 + x, (y1 + y2) * 0.5 + y, (z1 + z2) * 0.5 + z);
                 var sky = lightProvider.getBrightness(LightLayer.SKY, blockPos);
@@ -133,12 +178,12 @@ public class HangingWireRenderer extends EntityRenderer<HangingWireEntity> {
                         x1 + x, y1 + y, z1 + z,
                         x2 + x, y2 + y, z2 + z,
                         curve.cross1, curve.cross2, LightTexture.pack(block, sky), color,
-                        curve.thickness, 0, length, offset, !Minecraft.useFancyGraphics());
+                        curve.thickness, 0, (float) length, (float) offset, !Minecraft.useFancyGraphics());
         }, 0.5f);
     }
 
     public static void renderSegment(PoseStack ms, VertexConsumer buffer,
-                                     float x1, float y1, float z1, float x2, float y2, float z2,
+                                     double x1, double y1, double z1, double x2, double y2, double z2,
                                      Vec3 cross1, Vec3 cross2, int light, int color,
                                      float thickness, float thicknessOffset, float uvLength, float lengthOffset, boolean simpleModel) {
         if(simpleModel) {

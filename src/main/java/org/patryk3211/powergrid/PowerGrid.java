@@ -18,10 +18,7 @@ package org.patryk3211.powergrid;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.api.registry.CreateRegistries;
 import com.simibubi.create.content.kinetics.fan.processing.FanProcessingType;
-import dev.architectury.event.events.common.CommandRegistrationEvent;
-import dev.architectury.event.events.common.LifecycleEvent;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.event.events.common.*;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.minecraft.ChatFormatting;
@@ -36,15 +33,19 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 import org.patryk3211.powergrid.circuits.components.Components;
 import org.patryk3211.powergrid.collections.*;
+import org.patryk3211.powergrid.compat.sable.SableUtils;
 import org.patryk3211.powergrid.electricity.GlobalElectricNetworks;
 import org.patryk3211.powergrid.electricity.deviceconnector.DeviceConnectorBlockEntity;
 import org.patryk3211.powergrid.electricity.electromagnet.recipe.MagnetizingRecipe;
+import org.patryk3211.powergrid.electricity.fan.ElectricFanBlockEntity;
 import org.patryk3211.powergrid.electricity.heater.HeaterFanProcessingTypes;
 import org.patryk3211.powergrid.electricity.light.string.StringLightCordRecipe;
 import org.patryk3211.powergrid.electricity.sim.ElectricalNetwork;
 import org.patryk3211.powergrid.electricity.sim.solver.NativeMNA;
+import org.patryk3211.powergrid.electricity.wire.WireItem;
 import org.patryk3211.powergrid.equipment.thunder.LightningRodMovementBehaviour;
 import org.patryk3211.powergrid.kinetics.punchcard.PunchCardReaderBlockEntity;
+import org.patryk3211.powergrid.network.packets.NegotiateSyncC2SPacket;
 import org.patryk3211.powergrid.utility.Lang;
 import org.patryk3211.powergrid.utility.proxy.SubstituteBlockEntityProvider;
 import org.slf4j.Logger;
@@ -66,6 +67,11 @@ public class PowerGrid {
 		ElectricalNetwork.LOGGER = LOGGER;
 
 		NativeMNA.tryLoad();
+		if(dev.architectury.platform.Platform.isModLoaded("sable")) {
+			SableUtils.makeFullProxy();
+		} else {
+			SableUtils.makeDummyProxy();
+		}
 
 		ModdedSoundEvents.prepare();
 
@@ -87,6 +93,13 @@ public class PowerGrid {
 		LifecycleEvent.SERVER_LEVEL_UNLOAD.register(GlobalElectricNetworks::unloadWorld);
 		CommandRegistrationEvent.EVENT.register(ModdedCommands::register);
 		PlayerEvent.PLAYER_JOIN.register(PowerGrid::playerJoin);
+		PlayerEvent.PLAYER_QUIT.register(PowerGrid::playerQuit);
+		InteractionEvent.RIGHT_CLICK_BLOCK.register(WireItem::useOn);
+		InteractionEvent.RIGHT_CLICK_ITEM.register(WireItem::use);
+	}
+
+	private static void playerQuit(ServerPlayer player) {
+		NegotiateSyncC2SPacket.SYNC_TYPES.remove(player);
 	}
 
 	private static void playerJoin(ServerPlayer player) {
@@ -111,6 +124,7 @@ public class PowerGrid {
 
 		SubstituteBlockEntityProvider.INSTANCE.registerDefault(DeviceConnectorBlockEntity.class, DeviceConnectorBlockEntity::new);
 		SubstituteBlockEntityProvider.INSTANCE.registerDefault(PunchCardReaderBlockEntity.class, PunchCardReaderBlockEntity::new);
+		SubstituteBlockEntityProvider.INSTANCE.registerDefault(ElectricFanBlockEntity.class, ElectricFanBlockEntity::new);
 		SubstituteBlockEntityProvider.INSTANCE.lock();
 
 		ModdedDisplaySources.register();
