@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -52,10 +51,6 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
         return ModdedBlockEntities.MODULAR_DISPLAY.get();
     }
 
-    @Override
-    protected RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
-    }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
@@ -80,8 +75,8 @@ public class ModularDisplayBlock extends HorizontalElectricBlock implements IBE<
             default    -> { return InteractionResult.PASS; }
         }
 
-        int col = Math.clamp((int)(faceU * 4), 0, 3);
-        int row = Math.clamp((int)(faceV * 4), 0, 3);
+        int col = Math.max(0, Math.min(3, (int)(faceU * 4)));
+        int row = Math.max(0, Math.min(3, (int)(faceV * 4)));
         int slotIndex = row * 4 + col;
 
         if (level.isClientSide) return InteractionResult.SUCCESS;
