@@ -51,6 +51,7 @@ import org.patryk3211.powergrid.circuits.components.forge.ComponentRegistryImpl;
 import org.patryk3211.powergrid.collections.*;
 import org.patryk3211.powergrid.collections.forge.ModdedSoundEventsImpl;
 import org.patryk3211.powergrid.commands.PerformanceCommand;
+import org.patryk3211.powergrid.compat.cold_sweat.ColdSweatBridge;
 import org.patryk3211.powergrid.compat.tfmg.TFMGBridge;
 import org.patryk3211.powergrid.compat.tfmg.TFMGProxyImpl;
 import org.patryk3211.powergrid.data.BlockTagProvider;
@@ -88,6 +89,10 @@ public class PowerGridImpl {
         if(Platform.isModLoaded("tfmg")) {
             TFMGBridge.init();
             ProxyProvider.add(TFMGProxy.class, new TFMGProxyImpl());
+        }
+
+        if (Platform.isModLoaded("cold_sweat")) {
+            MinecraftForge.EVENT_BUS.register(ColdSweatBridge.class);
         }
 
         SubstituteBlockEntityProvider.INSTANCE.register(PunchCardReaderBlockEntity.class, PunchCardReaderBlockEntityImpl::new);
@@ -152,11 +157,24 @@ public class PowerGridImpl {
                 ModdedBlockEntities.WINDING,
                 ModdedBlockEntities.TRANSFORMER_MEDIUM,
                 ModdedBlockEntities.HV_SWITCH,
-                ModdedBlockEntities.DEVICE_CONNECTOR
+                ModdedBlockEntities.DEVICE_CONNECTOR,
+                ModdedBlockEntities.MULTIBLOCK_BATTERY,
+                ModdedBlockEntities.CARBON_PILE,
+                ModdedBlockEntities.CARBON_PILE_COIL
         );
         forbiddenBlockEntities.stream()
                 .map(entry -> entry.getId().toString())
                 .forEach(id -> InterModComms.sendTo("carryon", "blacklistBlock", () -> id));
+        var forbiddenEntities = List.of(
+                ModdedEntities.BLOCK_WIRE,
+                ModdedEntities.HANGING_WIRE,
+                ModdedEntities.CORD_ENTITY,
+                ModdedEntities.STRING_LIGHT_CORD,
+                ModdedEntities.ZAP_PROJECTILE
+        );
+        forbiddenEntities.stream()
+                .map(entry -> entry.getId().toString())
+                .forEach(id -> InterModComms.sendTo("carryon", "blacklistEntity", () -> id));
     }
 
     @SubscribeEvent

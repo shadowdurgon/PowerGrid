@@ -60,6 +60,11 @@ allprojects {
 		}
 
 		maven { url = "https://maven.terraformersmc.com/releases" } // Mod Menu, EMI
+
+		maven { // Cold Sweat
+			url = "https://cursemaven.com"
+			content { includeGroup("curse.maven") }
+		}
 	}
 
 	loom {
@@ -247,6 +252,8 @@ subprojects {
 		} else {
 			modLoaders.add('forge')
 		}
+
+		displayName = "Power Grid - ${mod_version.toString()} - ${isFabric ? 'Fabric' : 'Forge'}"
 
 		var createVersion = isFabric ? 'create-fabric' : 'create';
 		curseforge {

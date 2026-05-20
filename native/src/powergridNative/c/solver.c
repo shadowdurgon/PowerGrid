@@ -16,21 +16,16 @@ void solver_init(solver_t *solver, void *rhsOpBuf, void *jacobianOpBuf, int cmdC
 
     sparsematrix_init(&solver->m_A);
 
-    solver->m_X.ncol = 1;
-    solver->m_X.Stype = SLU_DN;
-    solver->m_X.Dtype = SLU_D;
-    solver->m_X.Mtype = SLU_GE;
-    solver->m_X.Store = &solver->m_Xstore;
-
     solver->m_B.ncol = 1;
     solver->m_B.Stype = SLU_DN;
     solver->m_B.Dtype = SLU_D;
     solver->m_B.Mtype = SLU_GE;
     solver->m_B.Store = &solver->m_Bstore;
-    
+
     solver->m_minimumAllowedPrecision = 1e-6;
     solver->m_absoluteStoppingCriterion = 1e-7;
     solver->m_relativeStoppingCriterion = 1e-12;
+    solver->m_maxSearchAlpha = 0.99;
 
     jclass clazz = (*env)->GetObjectClass(env, mnaObj);
     solver->m_iterHookMethod = (*env)->GetMethodID(env, clazz, "runIterHooks", "(ILjava/nio/ByteBuffer;)I");
@@ -54,16 +49,22 @@ static void solver_free_bufs(solver_t *solver) {
     solver->m_state = 0;
     solver->m_residual = 0;
     solver->m_stateDelta = 0;
+
+    PG_TRACE("[Solver::free_bufs] Deleting old jBuffers");
+    if(solver->m_stateBuffer != 0) {
+        (*solver->m_env)->DeleteGlobalRef(solver->m_env, solver->m_stateBuffer);
+        solver->m_stateBuffer = 0;
+    }
+    if(solver->m_bBuffer != 0) {
+        (*solver->m_env)->DeleteGlobalRef(solver->m_env, solver->m_bBuffer);
+        solver->m_bBuffer = 0;
+    }
 }
 
 void solver_destroy(solver_t *solver) {
     PG_TRACE("[Solver::~Solver] entering");
     sparsematrix_destroy(&solver->m_A);
     solver_free_bufs(solver);
-    if(solver->m_stateBuffer != 0)
-        (*solver->m_env)->DeleteGlobalRef(solver->m_env, solver->m_stateBuffer);
-    if(solver->m_bBuffer != 0)
-        (*solver->m_env)->DeleteGlobalRef(solver->m_env, solver->m_bBuffer);
     PG_TRACE("[Solver::~Solver] returning");
 }
 
@@ -86,16 +87,8 @@ void solver_resize(solver_t *solver, int size) {
     memset(solver->m_state, 0, sizeof(double) * size);
 
     PG_TRACE("[Solver::resize] Assigning new pointers");
-    solver->m_Xstore.lda = solver->m_X.nrow = size;
     solver->m_Bstore.lda = solver->m_B.nrow = size;
-    solver->m_Xstore.nzval = solver->m_state;
     solver->m_Bstore.nzval = solver->m_b;
-
-    PG_TRACE("[Solver::resize] Deleting old jBuffers");
-    if(solver->m_stateBuffer != 0)
-        (*solver->m_env)->DeleteGlobalRef(solver->m_env, solver->m_stateBuffer);
-    if(solver->m_bBuffer != 0)
-        (*solver->m_env)->DeleteGlobalRef(solver->m_env, solver->m_bBuffer);
 
     PG_TRACE("[Solver::resize] Allocating new jBuffers");
     solver->m_stateBuffer = (*solver->m_env)->NewDirectByteBuffer(solver->m_env, solver->m_state, size * sizeof(double));
@@ -131,7 +124,6 @@ static void solver_swap_buffers(solver_t *solver) {
     solver->m_state = solver->m_b;
     solver->m_b = buf;
 
-    solver->m_Xstore.nzval = solver->m_state;
     solver->m_Bstore.nzval = solver->m_b;
 
     jobject jbuf = solver->m_stateBuffer;
@@ -183,46 +175,32 @@ jobject solver_single_tick(solver_t *solver, int maxIters, jobject mnaObj, int c
 
     int i;
     double norm = 0;
-    char skipped = FALSE;
     for(i = 0; i < maxIters; ++i) {
-        if(!skipped) {
+        if(i == 0) {
             // Run inner hooks
-            int cmdCount = 0;
-            if(i < maxIters - 10)
-                cmdCount = (*solver->m_env)->CallIntMethod(solver->m_env, mnaObj, solver->m_iterHookMethod, i, solver->m_stateBuffer);
+            PG_ASSERT_(solver->m_stateBuffer, "jBuffer 'state' not initialized!");
+            int cmdCount = (*solver->m_env)->CallIntMethod(solver->m_env, mnaObj, solver->m_iterHookMethod, i, solver->m_stateBuffer);
             if(cmdCount != 0)
                 solver_process_jacobian_buffer(solver, cmdCount);
         }
 
         // Compute residual vector
         memcpy(solver->m_b, solver->m_rhs, solver->m_size * sizeof(double));
+        PG_ASSERT_(solver->m_bBuffer, "jBuffer 'b' not initialized!");
         (*solver->m_env)->CallVoidMethod(solver->m_env, mnaObj, solver->m_residualAddMethod, solver->m_bBuffer);
         memcpy(solver->m_residual, solver->m_b, solver->m_size * sizeof(double));
         int inc = 1;
-        
+
         char trans = 'N';
         // R = A * x - R
         SuperMatrix* A = sparsematrix_supermatrix(&solver->m_A);
         sp_dgemv(&trans, 1.0, A, solver->m_state, 1, -1.0, solver->m_residual, 1);
         int idxMax = idamax_(&solver->m_size, solver->m_residual, &inc);
         double nextNorm = fabs(solver->m_residual[idxMax - 1]);
-        if(i != 0 && nextNorm > norm && !skipped) {
-            double alpha = -0.9;
-            daxpy_(&solver->m_size, &alpha, solver->m_stateDelta, &inc, solver->m_state, &inc);
-            skipped = TRUE; --i;
-            continue;
-        }
-        skipped = FALSE;
         double dNorm = fabs(nextNorm - norm);
         norm = nextNorm;
         if(norm < solver->m_absoluteStoppingCriterion || dNorm < solver->m_relativeStoppingCriterion)
             break;
-        if(solver->m_converged && i >= maxIters - 11) {
-            // Right before non-linear devices are disabled.
-            // Only append new problem frames if the network has been converging before.
-            solver->m_converged = FALSE;
-            solver_convergence_problems(solver, mnaObj, norm, i);
-        }
 
         // Solve A * x = b
         sparsematrix_solve(&solver->m_A, &solver->m_B);
@@ -233,6 +211,29 @@ jobject solver_single_tick(solver_t *solver, int maxIters, jobject mnaObj, int c
             double alpha = -1.0;
             memcpy(solver->m_stateDelta, solver->m_state, solver->m_size * sizeof(double));
             daxpy_(&solver->m_size, &alpha, solver->m_b, &inc, solver->m_stateDelta, &inc);
+            // Perform solution fitting
+            alpha = 0;
+            while(alpha < solver->m_maxSearchAlpha) {
+                // Run inner hooks
+                PG_ASSERT_(solver->m_stateBuffer, "jBuffer 'state' not initialized!");
+                int cmdCount = (*solver->m_env)->CallIntMethod(solver->m_env, mnaObj, solver->m_iterHookMethod, i, solver->m_stateBuffer);
+                if(cmdCount != 0)
+                    solver_process_jacobian_buffer(solver, cmdCount);
+                // Compute residual vector
+                memcpy(solver->m_b, solver->m_rhs, solver->m_size * sizeof(double));
+                PG_ASSERT_(solver->m_bBuffer, "jBuffer 'b' not initialized!");
+                (*solver->m_env)->CallVoidMethod(solver->m_env, mnaObj, solver->m_residualAddMethod, solver->m_bBuffer);
+                memcpy(solver->m_residual, solver->m_b, solver->m_size * sizeof(double));
+                // R = A * x - R
+                sp_dgemv(&trans, 1.0, A, solver->m_state, 1, -1.0, solver->m_residual, 1);
+                idxMax = idamax_(&solver->m_size, solver->m_residual, &inc);
+                double testNorm = fabs(solver->m_residual[idxMax - 1]);
+                if(testNorm < norm)
+                    break;
+                double deltaAlpha = -(1 - alpha) * 0.5;
+                alpha -= deltaAlpha;
+                daxpy_(&solver->m_size, &deltaAlpha, solver->m_stateDelta, &inc, solver->m_state, &inc);
+            }
         }
 
         sparsematrix_same_pattern(&solver->m_A, 1);
@@ -244,7 +245,7 @@ jobject solver_single_tick(solver_t *solver, int maxIters, jobject mnaObj, int c
             solver_convergence_problems(solver, mnaObj, norm, i);
         solver->m_converged = FALSE;
     } else {
-        solver->m_converged = i < maxIters - 10;
+        solver->m_converged = TRUE;
     }
 
     solver->m_aux->status = solver->m_converged ? 1 : 0;
@@ -252,9 +253,10 @@ jobject solver_single_tick(solver_t *solver, int maxIters, jobject mnaObj, int c
     return solver->m_stateBuffer;
 }
 
-void solver_set_precision(solver_t *solver, double absolute, double relative, double minimum) {
+void solver_set_precision(solver_t *solver, double absolute, double relative, double minimum, double searchAlpha) {
     solver->m_absoluteStoppingCriterion = absolute;
     solver->m_relativeStoppingCriterion = relative;
     solver->m_minimumAllowedPrecision = minimum;
+    solver->m_maxSearchAlpha = searchAlpha;
 }
 

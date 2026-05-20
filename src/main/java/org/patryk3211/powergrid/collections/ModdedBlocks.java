@@ -78,6 +78,7 @@ import org.patryk3211.powergrid.electricity.grounding.GroundingRodBlock;
 import org.patryk3211.powergrid.electricity.heater.HeaterBlock;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlock;
 import org.patryk3211.powergrid.electricity.light.string.StringLightBlock;
+import org.patryk3211.powergrid.electricity.redstoneconverter.RedstoneConverterBlock;
 import org.patryk3211.powergrid.electricity.resistor.ResistorBlock;
 import org.patryk3211.powergrid.electricity.socket.SocketBlock;
 import org.patryk3211.powergrid.electricity.sparkgap.SparkGapBlock;
@@ -654,6 +655,16 @@ public class ModdedBlocks {
                 .build()
             .register();
 
+    public static final BlockEntry<RedstoneConverterBlock> REDSTONE_CONVERTER = REGISTRATE.block("redstone_converter", RedstoneConverterBlock::new)
+            .blockstate(surfaceBlock(state -> state.getValue(POWERED) ? "block/redstone_converter/on" : "block/redstone_converter/off"))
+            .transform(pickaxeOnly())
+            .transform(CResistance.setResistances("min", 5, "max", 1000))
+            .transform(CThermal.maxPower(50, 0.75f))
+            .item()
+                .model(itemWithParent("block/redstone_converter/off_v"))
+                .build()
+            .register();
+
     public static final BlockEntry<FuseHolderBlock> FUSE_HOLDER = REGISTRATE.block("fuse_holder", FuseHolderBlock::new)
             .blockstate(fuseHolder())
             .initialProperties(SharedProperties::wooden)
@@ -733,6 +744,16 @@ public class ModdedBlocks {
             .initialProperties(SharedProperties::wooden)
             .lang("Andesite Encased CRT")
             .blockstate(horizontalBlock("block/crt_andesite"))
+            .addLayer(() -> RenderType::translucent)
+            .transform(axeOrPickaxe())
+            .properties(p -> p.mapColor(MapColor.PODZOL))
+            .transform(EncasingRegistry.addVariantTo(CRT))
+            .register();
+
+    public static final BlockEntry<EncasedCRTBlock> BRASS_CRT = REGISTRATE.block("brass_encased_crt", p -> new EncasedCRTBlock(p, AllBlocks.BRASS_CASING::get))
+            .initialProperties(SharedProperties::wooden)
+            .lang("Brass Encased CRT")
+            .blockstate(horizontalBlock("block/crt_brass"))
             .addLayer(() -> RenderType::translucent)
             .transform(axeOrPickaxe())
             .properties(p -> p.mapColor(MapColor.PODZOL))

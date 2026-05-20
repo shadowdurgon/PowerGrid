@@ -45,6 +45,7 @@ import org.patryk3211.powergrid.electricity.grounding.GroundingRodBlockEntity;
 import org.patryk3211.powergrid.electricity.heater.HeaterBlockEntity;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureBlockEntity;
 import org.patryk3211.powergrid.electricity.light.fixture.LightFixtureRenderer;
+import org.patryk3211.powergrid.electricity.redstoneconverter.RedstoneConverterBlockEntity;
 import org.patryk3211.powergrid.electricity.resistor.ResistorBlockEntity;
 import org.patryk3211.powergrid.electricity.socket.SocketBlockEntity;
 import org.patryk3211.powergrid.electricity.sparkgap.SparkGapBlockEntity;
@@ -326,6 +327,11 @@ public class ModdedBlockEntities {
                     .validBlock(ModdedBlocks.SOCKET)
                     .register();
 
+    public static final BlockEntityEntry<RedstoneConverterBlockEntity> REDSTONE_CONVERTER =
+            REGISTRATE.blockEntity("redstone_converter", RedstoneConverterBlockEntity::new)
+                    .validBlock(ModdedBlocks.REDSTONE_CONVERTER)
+                    .register();
+
     public static final BlockEntityEntry<CarbonPileCoilBlockEntity> CARBON_PILE_COIL =
             REGISTRATE.blockEntity("carbon_pile_coil", CarbonPileCoilBlockEntity::new)
                     .validBlock(ModdedBlocks.CARBON_PILE_COIL)
@@ -338,7 +344,7 @@ public class ModdedBlockEntities {
 
     public static final BlockEntityEntry<CRTBlockEntity> CRT =
             REGISTRATE.blockEntity("crt", CRTBlockEntity::new)
-                    .validBlocks(ModdedBlocks.CRT, ModdedBlocks.ANDESITE_CRT)
+                    .validBlocks(ModdedBlocks.CRT, ModdedBlocks.ANDESITE_CRT, ModdedBlocks.BRASS_CRT)
                     .renderer(() -> CRTRenderer::new)
                     .register();
 
